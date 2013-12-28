@@ -18,7 +18,7 @@ public class BlastStarter {
 			s_file = q_file;
 		}
 		try {
-		runBlast(blastBin, q_file, s_file, tempDir, maxEvalue, ret);
+			runBlast(blastBin, q_file, s_file, tempDir, maxEvalue, ret);
 		} finally {
 			Thread.sleep(200);
 			q_file.delete();
@@ -65,7 +65,7 @@ public class BlastStarter {
 			Process p = Runtime.getRuntime().exec(CorrectProcess.arr(binPath + "makeblastdb", 
 					"-dbtype", "prot", "-in", databaseFile.getAbsolutePath()));
 			err_baos = new ByteArrayOutputStream();
-			cp = new CorrectProcess(p,null,"  ",err_baos,"");
+			cp = new CorrectProcess(p,new ByteArrayOutputStream(),"",err_baos,"");
 			p.waitFor();
 			err_baos.close();
 		}catch(Exception ex) {
@@ -87,7 +87,7 @@ public class BlastStarter {
 						"-query", queryFile.getAbsolutePath(), "-db", databaseFile.getAbsolutePath(), 
 						"-out", tempResFile.getAbsolutePath(), "-outfmt", "6", "-evalue", maxEvalue));
 				err_baos = new ByteArrayOutputStream();
-				cp = new CorrectProcess(p,null,"  ",err_baos,"");
+				cp = new CorrectProcess(p,new ByteArrayOutputStream(),"",err_baos,"");
 				p.waitFor();
 				err_baos.close();
 				procExitValue = p.exitValue();
