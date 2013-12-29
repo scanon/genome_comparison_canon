@@ -24,13 +24,15 @@ public class TestEcoli {
 	private static final String ws = "nardevuser1_home";
 	private static final String[] genomeNames = {
 		"Escherichia_coli_042",
-		"Escherichia_coli_Xuzhou21"
+		"Escherichia_coli_Xuzhou21",
+		"Escherichia_coli_P12b",
+		"Escherichia_coli_ETEC_H10407"
 	};
 
 	public static void main(String[] args) throws Exception {
-		runBlast(0, 1);
+		runBlast(0, 3);
 		//createImage();
-		//uploadGenome(genomeNames[1]);
+		//uploadGenome(genomeNames[3]);
 	}
 	
 	private static String getAuthToken() throws Exception {

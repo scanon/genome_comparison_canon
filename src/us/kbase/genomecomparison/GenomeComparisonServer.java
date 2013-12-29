@@ -1,9 +1,11 @@
 package us.kbase.genomecomparison;
 
+//BEGIN_HEADER
 import us.kbase.common.service.JsonServerMethod;
 import us.kbase.common.service.JsonServerServlet;
-
-//BEGIN_HEADER
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Properties;
 //END_HEADER
 
 /**
@@ -15,11 +17,32 @@ public class GenomeComparisonServer extends JsonServerServlet {
     private static final long serialVersionUID = 1L;
 
     //BEGIN_CLASS_HEADER
+    private final String configPath;
+    private TaskHolder taskHolder = null;
+    
+    private TaskHolder getTaskHolder() throws Exception {
+    	if (taskHolder == null) {
+    		Properties props = new Properties();
+    		props.load(new FileInputStream(new File(configPath)));
+    		int threadCount = 1;
+    		if (props.containsKey("thread.count"))
+    			threadCount = Integer.parseInt(props.getProperty("thread.count"));
+    		File tempDir = new File(".");
+    		if (props.containsKey("temp.dir"))
+    			tempDir = new File(props.getProperty("temp.dir"));
+    		File blastBin = null;
+    		if (props.contains("blast.bin"))
+    			blastBin = new File(props.getProperty("blast.bin"));
+    		taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
+    	}
+    	return taskHolder;
+    }
     //END_CLASS_HEADER
 
     public GenomeComparisonServer() throws Exception {
         super("GenomeComparison");
         //BEGIN_CONSTRUCTOR
+        configPath = getInitParameter("config_file");
         //END_CONSTRUCTOR
     }
 
@@ -34,6 +57,7 @@ public class GenomeComparisonServer extends JsonServerServlet {
     public String blastProteomes(BlastProteomesParams input) throws Exception {
         String returnVal = null;
         //BEGIN blast_proteomes
+        returnVal = getTaskHolder().addTask(input, null);
         //END blast_proteomes
         return returnVal;
     }
