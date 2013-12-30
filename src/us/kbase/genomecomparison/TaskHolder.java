@@ -24,8 +24,6 @@ import us.kbase.workspaceservice.SaveObjectParams;
 import us.kbase.workspaceservice.SetJobStatusParams;
 import us.kbase.workspaceservice.WorkspaceServiceClient;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class TaskHolder {
 	private Map<String, Task> taskMap = new HashMap<String, Task>();
 	private LinkedList<Task> taskQueue = new LinkedList<Task>();
@@ -113,7 +111,7 @@ public class TaskHolder {
 					int ret = Double.compare(o2.getScore(), o1.getScore());
 					if (ret == 0) {
 						if (o1.getPercentOfBestScore() != null && o2.getPercentOfBestScore() != null) {
-							ret = Long.compare(o2.getPercentOfBestScore(), o1.getPercentOfBestScore());
+							ret = Utils.compare(o2.getPercentOfBestScore(), o1.getPercentOfBestScore());
 						}
 					}
 					return ret;
@@ -297,9 +295,9 @@ public class TaskHolder {
 			public int compare(InnerFeature o1, InnerFeature o2) {
 				int ret = o1.contigName.compareTo(o2.contigName);
 				if (ret == 0) {
-					ret = Integer.compare(o1.start, o2.start);
+					ret = Utils.compare(o1.start, o2.start);
 					if (ret == 0)
-						ret = Integer.compare(o1.stop, o2.stop);
+						ret = Utils.compare(o1.stop, o2.stop);
 				}
 				return ret;
 			}

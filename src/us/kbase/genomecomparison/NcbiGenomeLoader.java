@@ -80,9 +80,9 @@ public class NcbiGenomeLoader {
 		Collections.sort(proteins, new Comparator<Feature>() {
 			@Override
 			public int compare(Feature o1, Feature o2) {
-				int ret = Integer.compare(o1.start, o2.start);
+				int ret = Utils.compare(o1.start, o2.start);
 				if (ret == 0)
-					ret = Integer.compare(o1.stop, o2.stop);
+					ret = Utils.compare(o1.stop, o2.stop);
 				return ret;
 			}
 		});
