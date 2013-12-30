@@ -7,6 +7,9 @@ import us.kbase.common.service.JsonServerServlet;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
 //END_HEADER
 
 /**
@@ -18,23 +21,32 @@ public class GenomeComparisonServer extends JsonServerServlet {
     private static final long serialVersionUID = 1L;
 
     //BEGIN_CLASS_HEADER
-    private final String configPath;
+    private String configPath = null;
     private TaskHolder taskHolder = null;
+    
+    public void init(ServletConfig servletConfig) throws ServletException {
+        configPath = servletConfig.getInitParameter("config_file");
+    }
     
     private TaskHolder getTaskHolder() throws Exception {
     	if (taskHolder == null) {
-    		Properties props = new Properties();
-    		props.load(new FileInputStream(new File(configPath)));
     		int threadCount = 1;
-    		if (props.containsKey("thread.count"))
-    			threadCount = Integer.parseInt(props.getProperty("thread.count"));
     		File tempDir = new File(".");
-    		if (props.containsKey("temp.dir"))
-    			tempDir = new File(props.getProperty("temp.dir"));
     		File blastBin = null;
-    		if (props.contains("blast.bin"))
-    			blastBin = new File(props.getProperty("blast.bin"));
-    		taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
+    		if (configPath != null) {
+    			File f = new File(configPath);
+    			if (f.exists()) {
+    				Properties props = new Properties();
+    				props.load(new FileInputStream(f));
+    				if (props.containsKey("thread.count"))
+    					threadCount = Integer.parseInt(props.getProperty("thread.count"));
+    				if (props.containsKey("temp.dir"))
+    					tempDir = new File(props.getProperty("temp.dir"));
+    				if (props.contains("blast.bin"))
+    					blastBin = new File(props.getProperty("blast.bin"));
+    				taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
+    			}
+    		}
     	}
     	return taskHolder;
     }
@@ -43,7 +55,6 @@ public class GenomeComparisonServer extends JsonServerServlet {
     public GenomeComparisonServer() throws Exception {
         super("GenomeComparison");
         //BEGIN_CONSTRUCTOR
-        configPath = getInitParameter("config_file");
         //END_CONSTRUCTOR
     }
 

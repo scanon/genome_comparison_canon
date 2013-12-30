@@ -33,9 +33,9 @@ public class TestEcoli {
 	};
 
 	public static void main(String[] args) throws Exception {
-		runBlast(0, 3);
+		runBlast(0, 4);
 		//createImage();
-		//uploadGenome(genomeNames[3]);
+		//uploadGenome(genomeNames[4]);
 	}
 	
 	private static String getAuthToken() throws Exception {
@@ -47,7 +47,7 @@ public class TestEcoli {
 		String outId = "proteome_cmp_" + genome1 + "_" + genome2;
 		String token = getAuthToken();
 		//TaskHolder th = new TaskHolder(1, dir, new File("blast/macosx"));
-		GenomeComparisonClient cl = new GenomeComparisonClient(new URL(""), new AuthToken(token));
+		GenomeComparisonClient cl = new GenomeComparisonClient(new URL("http://140.221.85.98:8283/jsonrpc"), new AuthToken(token));
 		cl.setAuthAllowedForHttp(true);
 		String jobId = cl.blastProteomes(new BlastProteomesParams()
 				.withGenome1ws(ws).withGenome1id(genomeNames[genome1])
