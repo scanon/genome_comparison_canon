@@ -57,5 +57,5 @@ module GenomeComparison {
 		string output_id;
 	} blast_proteomes_params;
 
-	funcdef blast_proteomes(blast_proteomes_params input) returns (string job_id);
+	funcdef blast_proteomes(blast_proteomes_params input) returns (string job_id) authentication required;
 };

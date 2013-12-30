@@ -1,8 +1,9 @@
 package us.kbase.genomecomparison;
 
-//BEGIN_HEADER
+import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonServerMethod;
 import us.kbase.common.service.JsonServerServlet;
+//BEGIN_HEADER
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -54,10 +55,10 @@ public class GenomeComparisonServer extends JsonServerServlet {
      * @return   parameter "job_id" of String
      */
     @JsonServerMethod(rpc = "GenomeComparison.blast_proteomes")
-    public String blastProteomes(BlastProteomesParams input) throws Exception {
+    public String blastProteomes(BlastProteomesParams input, AuthToken authPart) throws Exception {
         String returnVal = null;
         //BEGIN blast_proteomes
-        returnVal = getTaskHolder().addTask(input, null);
+        returnVal = getTaskHolder().addTask(input, authPart.toString());
         //END blast_proteomes
         return returnVal;
     }

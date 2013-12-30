@@ -1,6 +1,7 @@
 package us.kbase.genomecomparison;
 
 import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -9,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import us.kbase.auth.AuthService;
+import us.kbase.auth.AuthToken;
 import us.kbase.common.service.UObject;
 import us.kbase.genomecomparison.NcbiGenomeLoader.Feature;
 import us.kbase.workspaceservice.GetJobsParams;
@@ -26,7 +28,8 @@ public class TestEcoli {
 		"Escherichia_coli_042",
 		"Escherichia_coli_Xuzhou21",
 		"Escherichia_coli_P12b",
-		"Escherichia_coli_ETEC_H10407"
+		"Escherichia_coli_ETEC_H10407",
+		"Escherichia_coli_BW2952"
 	};
 
 	public static void main(String[] args) throws Exception {
@@ -43,11 +46,14 @@ public class TestEcoli {
 	public static void runBlast(int genome1, int genome2) throws Exception {
 		String outId = "proteome_cmp_" + genome1 + "_" + genome2;
 		String token = getAuthToken();
-		TaskHolder th = new TaskHolder(1, dir, new File("blast/macosx"));
-		String jobId = th.addTask(new BlastProteomesParams()
+		//TaskHolder th = new TaskHolder(1, dir, new File("blast/macosx"));
+		GenomeComparisonClient cl = new GenomeComparisonClient(new URL(""), new AuthToken(token));
+		cl.setAuthAllowedForHttp(true);
+		String jobId = cl.blastProteomes(new BlastProteomesParams()
 				.withGenome1ws(ws).withGenome1id(genomeNames[genome1])
 				.withGenome2ws(ws).withGenome2id(genomeNames[genome2])
-				.withOutputWs(ws).withOutputId(outId), token);
+				.withOutputWs(ws).withOutputId(outId));
+		long time = System.currentTimeMillis();
 		while (true) {
 			Map<String, Object> jobMap = (Map<String, Object>)TaskHolder.createWsClient(token).getJobs(
 					new GetJobsParams().withAuth(token).withJobids(Arrays.asList(jobId))).get(0);
@@ -70,7 +76,8 @@ public class TestEcoli {
 			}
 			Thread.sleep(5000);
 		}
-		th.stopAllThreads();
+		System.out.println("Time: " + (System.currentTimeMillis() - time) + " ms.");
+		//th.stopAllThreads();
 	}
 
 	private static void createImage() throws Exception {
