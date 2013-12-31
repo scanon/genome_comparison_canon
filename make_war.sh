@@ -51,12 +51,15 @@ cat > $WEB_INF_DIR/web.xml <<EOF
     </servlet-mapping>
 </web-app>
 EOF
+
+cp ./web/* $WAR_DIR
+
 if [ -f $WAR_FILE ]
 then
     rm $WAR_FILE
 fi
 cd $WAR_DIR
-zip -r $WAR_FILE WEB-INF
+zip -r $WAR_FILE *
 cd ..
 rm -rf $WAR_DIR
 

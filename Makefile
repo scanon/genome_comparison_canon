@@ -31,6 +31,7 @@ distrib:
 	chmod +x $(SERVICE_DIR)/start_service.sh
 	echo "./glassfish_stop_service.sh $(TARGET_PORT)" > $(SERVICE_DIR)/stop_service.sh
 	chmod +x $(SERVICE_DIR)/stop_service.sh
+	./create_config.sh $(SERVICE_DIR) $(THREADPOOL_SIZE)
 
 clean:
 	@echo "nothing to clean"

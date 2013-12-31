@@ -29,13 +29,15 @@ public class TestEcoli {
 		"Escherichia_coli_Xuzhou21",
 		"Escherichia_coli_P12b",
 		"Escherichia_coli_ETEC_H10407",
-		"Escherichia_coli_BW2952"
+		"Escherichia_coli_BW2952",
+		"Escherichia_coli_O127_H6_E2348_69",
+		"Escherichia_coli_UM146"
 	};
 
 	public static void main(String[] args) throws Exception {
-		runBlast(0, 4);
-		//createImage();
-		//uploadGenome(genomeNames[4]);
+		//runBlast(0, 6);
+		createImage();
+		//uploadGenome(genomeNames[6]);
 	}
 	
 	private static String getAuthToken() throws Exception {
@@ -70,7 +72,9 @@ public class TestEcoli {
 							.withType("ProteomeComparison").withId(outId));
 					ProteomeComparison cmp = UObject.transformObjectToObject(out.getData(), ProteomeComparison.class);
 					new ObjectMapper().writeValue(new File(dir, outId + ".json"), cmp);
-					ComparisonImage.saveImage(cmp, 25, new File(dir, outId + ".png"));
+					int w = cmp.getProteome1names().size() * 25 / 100;
+					int h = cmp.getProteome2names().size() * 25 / 100;
+					ComparisonImage.saveImage(cmp, 0, 0, w, h, 25, new File(dir, outId + ".png"));
 				}
 				break;
 			}
@@ -83,7 +87,9 @@ public class TestEcoli {
 	private static void createImage() throws Exception {
 		File f = new File(dir, "cmp.json");
 		ProteomeComparison cmp = new ObjectMapper().readValue(f, ProteomeComparison.class);
-		ComparisonImage.saveImage(cmp, 25, new File(dir, "cmp.png"));
+		int size = Math.max(cmp.getProteome1names().size() * 25 / 100,
+				cmp.getProteome2names().size() * 25 / 100);
+		ComparisonImage.saveImage(cmp, 200, 200, size, size, 50, new File(dir, "cmp2.png"));
 	}
 	
 	private static void uploadGenome(String genomeName) throws Exception {
