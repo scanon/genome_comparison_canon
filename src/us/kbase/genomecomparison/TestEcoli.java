@@ -36,7 +36,7 @@ public class TestEcoli {
 
 	public static void main(String[] args) throws Exception {
 		//runBlast(0, 6);
-		createImage();
+		createImage("proteome_cmp_0_1");
 		//uploadGenome(genomeNames[6]);
 	}
 	
@@ -67,14 +67,7 @@ public class TestEcoli {
 				if (error != null) {
 					System.out.println("Error: " + error);
 				} else {
-					GetObjectOutput out = TaskHolder.createWsClient(token).getObject(
-							new GetObjectParams().withWorkspace(ws)
-							.withType("ProteomeComparison").withId(outId));
-					ProteomeComparison cmp = UObject.transformObjectToObject(out.getData(), ProteomeComparison.class);
-					new ObjectMapper().writeValue(new File(dir, outId + ".json"), cmp);
-					int w = cmp.getProteome1names().size() * 25 / 100;
-					int h = cmp.getProteome2names().size() * 25 / 100;
-					ComparisonImage.saveImage(cmp, 0, 0, w, h, 25, new File(dir, outId + ".png"));
+					createImage(outId);
 				}
 				break;
 			}
@@ -84,12 +77,16 @@ public class TestEcoli {
 		//th.stopAllThreads();
 	}
 
-	private static void createImage() throws Exception {
-		File f = new File(dir, "cmp.json");
-		ProteomeComparison cmp = new ObjectMapper().readValue(f, ProteomeComparison.class);
-		int size = Math.max(cmp.getProteome1names().size() * 25 / 100,
-				cmp.getProteome2names().size() * 25 / 100);
-		ComparisonImage.saveImage(cmp, 200, 200, size, size, 50, new File(dir, "cmp2.png"));
+	private static void createImage(String cmpId) throws Exception {
+		String token = getAuthToken();
+		GetObjectOutput out = TaskHolder.createWsClient(token).getObject(
+				new GetObjectParams().withWorkspace(ws)
+				.withType("ProteomeComparison").withId(cmpId));
+		ProteomeComparison cmp = UObject.transformObjectToObject(out.getData(), ProteomeComparison.class);
+		new ObjectMapper().writeValue(new File(dir, cmpId + ".json"), cmp);
+		int w = cmp.getProteome1names().size() * 25 / 100;
+		int h = cmp.getProteome2names().size() * 25 / 100;
+		ComparisonImage.saveImage(cmp, 0, 0, w, h, 25, new File(dir, cmpId + ".png"));
 	}
 	
 	private static void uploadGenome(String genomeName) throws Exception {

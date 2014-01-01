@@ -20,6 +20,9 @@ test:
 
 compile: src
 	./make_war.sh $(SERVICE_DIR) $(LIB_JARS_DIR)
+	mkdir -p ./clients
+	compile_typespec GenomeComparison.spec ./clients
+	find ./clients -type f | grep -v Client | xargs rm
 
 distrib:
 	@echo "Service folder: $(SERVICE_DIR)"
