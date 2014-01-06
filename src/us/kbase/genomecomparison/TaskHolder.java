@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,11 +18,12 @@ import java.util.concurrent.TimeUnit;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.Tuple3;
 import us.kbase.common.service.UObject;
+import us.kbase.userandjobstate.InitProgress;
+import us.kbase.userandjobstate.Results;
+import us.kbase.userandjobstate.UserAndJobStateClient;
 import us.kbase.workspaceservice.GetObjectParams;
 import us.kbase.workspaceservice.ObjectData;
-import us.kbase.workspaceservice.QueueJobParams;
 import us.kbase.workspaceservice.SaveObjectParams;
-import us.kbase.workspaceservice.SetJobStatusParams;
 import us.kbase.workspaceservice.WorkspaceServiceClient;
 
 public class TaskHolder {
@@ -34,6 +36,8 @@ public class TaskHolder {
 	private final File blastBin;
 	
 	private static final String wsUrl = "https://kbase.us/services/workspace/";
+    private static final String jobSrvUrl = "http://140.221.84.180:7083";
+    //private static final String jobSrvUrl = "http://kbase.us/services/userandjobstate/";
 	
 	public TaskHolder(int threadCount, File tempDir, File blastBin) {
 		this.tempDir = tempDir;
@@ -191,7 +195,7 @@ public class TaskHolder {
 				.withProteome2names(prot2names).withProteome2map(prot2map)
 				.withData1(data1new).withData2(data2new);
 			saveResult(task.getParams().getOutputWs(), task.getParams().getOutputId(), token, res);
-			completeTaskState(task, token, null);
+			completeTaskState(task, token, null, null);
 			time = System.currentTimeMillis() - time;
 			//System.out.println("Time: " + time + " ms.");
 		}catch(Throwable e) {
@@ -200,7 +204,7 @@ public class TaskHolder {
 			e.printStackTrace(pw);
 			pw.close();
 			try {
-				completeTaskState(task, token, sw.toString());
+				completeTaskState(task, token, e.getMessage(), sw.toString());
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -236,36 +240,31 @@ public class TaskHolder {
 		ret.setAuthAllowedForHttp(true);
 		return ret;
 	}
-	
-	private String createQueuedTaskJob(BlastProteomesParams params, String token) throws Exception {
-		Map<String, String> jobData = createJobDataMap(params);
-		String ret = createWsClient(token).queueJob(new QueueJobParams().withAuth(token)
-				.withQueuecommand("GenomeComparison.blast_proteomes")
-				.withJobdata(jobData).withType("blastp")).getId();
+
+	public static UserAndJobStateClient createJobClient(String token) throws Exception {
+		UserAndJobStateClient ret = new UserAndJobStateClient(new URL(jobSrvUrl), new AuthToken(token));
+		ret.setAuthAllowedForHttp(true);
 		return ret;
 	}
 
-	@SuppressWarnings("unchecked")
-	private Map<String, String> createJobDataMap(BlastProteomesParams params) {
-		Map<String, String> jobData = UObject.transformObjectToObject(params, Map.class);
-		jobData.put("sub_bbh_percent", "" + jobData.get("sub_bbh_percent"));
-		return jobData;
-	}
-	
-	private void changeTaskStateIntoRunning(Task task, String token) throws Exception {
-		Map<String, String> jobData = createJobDataMap(task.getParams());
-		createWsClient(token).setJobStatus(new SetJobStatusParams().withAuth(token)
-				.withStatus("running").withJobid(task.getJobId())
-				.withJobdata(jobData));
+	private String createQueuedTaskJob(BlastProteomesParams params, String token) throws Exception {
+		return createJobClient(token).createAndStartJob(token, "queued", "Blast proteomes of two genomes", 
+				new InitProgress().withPtype("none"), null);
 	}
 
-	private void completeTaskState(Task task, String token, String errorMessage) throws Exception {
-		Map<String, String> jobData = createJobDataMap(task.getParams());
-		if (errorMessage != null)
-			jobData.put("error", errorMessage);
-		createWsClient(token).setJobStatus(new SetJobStatusParams().withAuth(token)
-				.withStatus("done").withJobid(task.getJobId())
-				.withJobdata(jobData));
+	private void changeTaskStateIntoRunning(Task task, String token) throws Exception {
+		createJobClient(token).updateJob(task.getJobId(), token, "running", null);
+	}
+
+	private void completeTaskState(Task task, String token, String errorMessage, String errorStacktrace) throws Exception {
+		if (errorMessage == null) {
+			createJobClient(token).completeJob(task.getJobId(), token, "done", null, 
+					new Results().withWorkspaceurl(wsUrl).withWorkspaceids(
+							Arrays.asList(task.getParams().getOutputWs() + "/" + task.getParams().getOutputId())));
+		} else {
+			createJobClient(token).completeJob(task.getJobId(), token, "Error: " + errorMessage, 
+					errorStacktrace, new Results()); 
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -308,11 +307,6 @@ public class TaskHolder {
 	
 	@SuppressWarnings("unchecked")
 	private void saveResult(String ws, String id, String token, ProteomeComparison res) throws Exception {
-		/*File dir = new File(id);
-		File f = new File(dir, "cmp.json");
-		new ObjectMapper().writeValue(f, res);
-		ComparisonImage.saveImage(res, 25, new File(dir, "cmp.png"));
-		*/
 		ObjectData data = new ObjectData();
 		data.getAdditionalProperties().putAll(UObject.transformObjectToObject(res, Map.class));
 		createWsClient(token).saveObject(new SaveObjectParams().withAuth(token).withWorkspace(ws)
