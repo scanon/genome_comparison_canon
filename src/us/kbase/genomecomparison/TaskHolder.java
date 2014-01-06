@@ -45,7 +45,7 @@ public class TaskHolder {
 	}
 	
 	public synchronized String addTask(BlastProteomesParams params, String authToken) throws Exception {
-		String jobId = createTaskJob(params, authToken);
+		String jobId = createQueuedTaskJob(params, authToken);
 		Task task = new Task(jobId, params, authToken);
 		taskQueue.addLast(task);
 		taskMap.put(task.getJobId(), task);
@@ -74,7 +74,7 @@ public class TaskHolder {
 	private void runTask(Task task) {
 		String token = task.getAuthToken();
 		try {
-			changeTaskState(task, "running", token, null);
+			changeTaskStateIntoRunning(task, token);
 			List<InnerFeature> features1 = extractProteome(task.getParams().getGenome1ws(), 
 					task.getParams().getGenome1id(), token);
 			Map<String, String> proteome1 = featuresToProtMap(features1);
@@ -191,7 +191,7 @@ public class TaskHolder {
 				.withProteome2names(prot2names).withProteome2map(prot2map)
 				.withData1(data1new).withData2(data2new);
 			saveResult(task.getParams().getOutputWs(), task.getParams().getOutputId(), token, res);
-			changeTaskState(task, "done", token, null);
+			completeTaskState(task, token, null);
 			time = System.currentTimeMillis() - time;
 			//System.out.println("Time: " + time + " ms.");
 		}catch(Throwable e) {
@@ -200,7 +200,7 @@ public class TaskHolder {
 			e.printStackTrace(pw);
 			pw.close();
 			try {
-				changeTaskState(task, "done", token, sw.toString());
+				completeTaskState(task, token, sw.toString());
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -237,12 +237,11 @@ public class TaskHolder {
 		return ret;
 	}
 	
-	private String createTaskJob(BlastProteomesParams params, String token) throws Exception {
+	private String createQueuedTaskJob(BlastProteomesParams params, String token) throws Exception {
 		Map<String, String> jobData = createJobDataMap(params);
 		String ret = createWsClient(token).queueJob(new QueueJobParams().withAuth(token)
 				.withQueuecommand("GenomeComparison.blast_proteomes")
 				.withJobdata(jobData).withType("blastp")).getId();
-		//System.out.println("Task was created");
 		return ret;
 	}
 
@@ -253,20 +252,22 @@ public class TaskHolder {
 		return jobData;
 	}
 	
-	private void changeTaskState(Task task, String state, String token, String errorMessage) throws Exception {
-		if ((!state.equals("running")) && (!state.equals("done")))
-			throw new IllegalStateException("Unknown job state: " + state);
+	private void changeTaskStateIntoRunning(Task task, String token) throws Exception {
+		Map<String, String> jobData = createJobDataMap(task.getParams());
+		createWsClient(token).setJobStatus(new SetJobStatusParams().withAuth(token)
+				.withStatus("running").withJobid(task.getJobId())
+				.withJobdata(jobData));
+	}
+
+	private void completeTaskState(Task task, String token, String errorMessage) throws Exception {
 		Map<String, String> jobData = createJobDataMap(task.getParams());
 		if (errorMessage != null)
 			jobData.put("error", errorMessage);
 		createWsClient(token).setJobStatus(new SetJobStatusParams().withAuth(token)
-				.withStatus(state).withJobid(task.getJobId())
+				.withStatus("done").withJobid(task.getJobId())
 				.withJobdata(jobData));
-		//System.out.println("Task state was changed: " + state);
-		//if (errorMessage != null)
-		//	System.out.println(errorMessage);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private List<InnerFeature> extractProteome(String ws, String genomeId, String token) throws Exception {
 		Map<String, Object> genome = (Map<String, Object>)createWsClient(token).getObject(
