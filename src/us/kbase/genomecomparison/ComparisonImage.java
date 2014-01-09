@@ -15,12 +15,29 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+
 import us.kbase.common.service.Tuple3;
 import us.kbase.common.service.UObject;
 import us.kbase.workspaceservice.GetObjectOutput;
 import us.kbase.workspaceservice.GetObjectParams;
 
 public class ComparisonImage extends HttpServlet {
+	
+	public static void main(String[] args) throws Exception {
+		int port = 8888;
+		if (args.length == 1)
+			port = Integer.parseInt(args[0]);
+		Server jettyServer = new Server(port);
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		context.setContextPath("/");
+		jettyServer.setHandler(context);
+		context.addServlet(new ServletHolder(new ComparisonImage()),"/image");
+		jettyServer.start();
+		jettyServer.join();
+	}
 	
 	public void doGet(HttpServletRequest request, HttpServletResponse response)  
             throws IOException { 
@@ -43,7 +60,7 @@ public class ComparisonImage extends HttpServlet {
 		OutputStream out = response.getOutputStream();
 		BufferedImage img = draw(cmp, x, y, w, w, sp);
 		ImageIO.write(img, "PNG", out);
-   }
+	}
 	
 	public static BufferedImage draw(ProteomeComparison cmp, int i0, int j0, int w0, int h0, double sp) {
 		int xShift = 35;

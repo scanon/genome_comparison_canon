@@ -45,9 +45,17 @@ cat > $WEB_INF_DIR/web.xml <<EOF
             <param-value>$CONFIG_FILE</param-value> 
         </init-param>
     </servlet>
+    <servlet>
+        <servlet-name>ImageServlet</servlet-name>
+        <servlet-class>us.kbase.genomecomparison.ComparisonImage</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>JsonRpcServlet</servlet-name>
         <url-pattern>/jsonrpc</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ImageServlet</servlet-name>
+        <url-pattern>/image</url-pattern>
     </servlet-mapping>
 </web-app>
 EOF
