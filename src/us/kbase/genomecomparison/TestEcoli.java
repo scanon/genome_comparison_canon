@@ -36,7 +36,7 @@ public class TestEcoli {
 
 	public static void main(String[] args) throws Exception {
 		//runBlast(0, 6);
-		createImage("proteome_cmp_0_1");
+		createImage("proteome_cmp_0_2");
 		//uploadGenome(genomeNames[6]);
 	}
 	

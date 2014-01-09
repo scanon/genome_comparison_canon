@@ -1,7 +1,9 @@
 package us.kbase.genomecomparison;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +15,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple3;
 import us.kbase.common.service.UObject;
 import us.kbase.workspaceservice.GetObjectOutput;
@@ -45,12 +46,12 @@ public class ComparisonImage extends HttpServlet {
    }
 	
 	public static BufferedImage draw(ProteomeComparison cmp, int i0, int j0, int w0, int h0, double sp) {
-		//int w = (int)(cmp.getProteome1names().size() * sp / 100.0);
-		//int h = (int)(cmp.getProteome2names().size() * sp / 100.0);
-		BufferedImage ret = new BufferedImage(w0, h0, BufferedImage.TYPE_INT_ARGB);
+		int xShift = 35;
+		int yShift = 15;
+		BufferedImage ret = new BufferedImage(w0 + xShift, h0 + yShift, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D gr = (Graphics2D)ret.getGraphics();
 		gr.setColor(Color.WHITE);
-		gr.fillRect(0, 0, w0, h0);
+		gr.fillRect(0, 0, w0 + xShift, h0 + yShift);
 		int imax = cmp.getProteome1names().size();
 		if ((imax - 1 - i0) * sp / 100.0 > w0)
 			imax = Math.min(cmp.getProteome1names().size(), (int)(w0 * 100.0 / sp) + i0 + 1);
@@ -60,7 +61,7 @@ public class ComparisonImage extends HttpServlet {
 			jmax = Math.min(cmp.getProteome2names().size(), (int)(h0 * 100.0 / sp) + j0 + 1);
 		int ymax = Math.min(h0, (int)((jmax - j0 - 1) * sp / 100.0) + 1);
 		gr.setColor(new Color(0, 75, 75));
-		gr.fillRect(0, 0, xmax, ymax);
+		gr.fillRect(xShift, 0, xmax, ymax);
 		for (int i = i0; i < imax; i++) {
 			int x = (int)((i - i0) * sp / 100.0);
 			List<Tuple3<Long, Long, Long>> hitList = cmp.getData1().get(i);
@@ -70,11 +71,26 @@ public class ComparisonImage extends HttpServlet {
 					continue;
 				int y = ymax - 1 - (int)((j - j0) * sp / 100.0);
 				gr.setColor(getColor(hit.getE3()));
-				gr.drawLine(x, y, x, y);
+				gr.drawLine(x + xShift, y, x + xShift, y);
 			}
 		}
+		gr.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+		gr.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		gr.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+		gr.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+		gr.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		gr.setColor(Color.BLACK);
+		drawStringRigth("" + (j0 + 1), xShift - 2, ymax - 5, gr);
+		drawStringRigth("" + jmax, xShift - 2, 12, gr);
+		gr.drawString("" + (i0 + 1), xShift, ymax + 12);
+		drawStringRigth("" + imax, xmax + xShift - 1, ymax + 12, gr);
 		gr.dispose();
 		return ret;
+	}
+	
+	private static void drawStringRigth(String text, int x, int y, Graphics2D gr) {
+		FontMetrics fm = gr.getFontMetrics();
+		gr.drawString(text, x - fm.stringWidth(text), y);
 	}
 	
 	private static Color getColor(long bbhPercent) {
