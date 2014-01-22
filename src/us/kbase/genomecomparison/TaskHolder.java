@@ -36,8 +36,8 @@ public class TaskHolder {
 	private final File blastBin;
 	
 	private static final String wsUrl = "https://kbase.us/services/workspace/";
-    private static final String jobSrvUrl = "http://140.221.84.180:7083";
-    //private static final String jobSrvUrl = "http://kbase.us/services/userandjobstate/";
+    //private static final String jobSrvUrl = "http://140.221.84.180:7083";
+    private static final String jobSrvUrl = "https://kbase.us/services/userandjobstate/";
 	
 	public TaskHolder(int threadCount, File tempDir, File blastBin) {
 		this.tempDir = tempDir;
@@ -268,7 +268,7 @@ public class TaskHolder {
 	}
 
 	@SuppressWarnings("unchecked")
-	private List<InnerFeature> extractProteome(String ws, String genomeId, String token) throws Exception {
+	private static List<InnerFeature> extractProteome(String ws, String genomeId, String token) throws Exception {
 		Map<String, Object> genome = (Map<String, Object>)createWsClient(token).getObject(
 				new GetObjectParams().withAuth(token).withWorkspace(ws)
 				.withId(genomeId).withType("Genome")).getData();
@@ -283,9 +283,9 @@ public class TaskHolder {
 			inf.seq = "" + feature.get("protein_translation");
 			List<Object> location = ((List<List<Object>>)feature.get("location")).get(0);
 			inf.contigName = "" + location.get(0);
-			int realStart = (Integer)location.get(1);
+			int realStart = Integer.parseInt("" + location.get(1));
 			String dir = "" + location.get(2);
-			int len = (Integer)location.get(3);
+			int len = Integer.parseInt("" + location.get(3));
 			inf.start = dir.equals("+") ? realStart : (realStart - len);
 			inf.stop = dir.equals("+") ? (realStart + len) : realStart;
 			ret.add(inf);
