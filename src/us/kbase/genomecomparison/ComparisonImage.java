@@ -8,6 +8,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
@@ -19,13 +20,15 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
+import us.kbase.common.service.JsonClientException;
 import us.kbase.common.service.Tuple3;
 import us.kbase.common.service.UObject;
-import us.kbase.workspaceservice.GetObjectOutput;
-import us.kbase.workspaceservice.GetObjectParams;
+import us.kbase.workspace.ObjectIdentity;
 
 public class ComparisonImage extends HttpServlet {
 	
+	private static final long serialVersionUID = 1L;
+
 	public static void main(String[] args) throws Exception {
 		int port = 8888;
 		if (args.length == 1)
@@ -48,18 +51,23 @@ public class ComparisonImage extends HttpServlet {
 		int w = Integer.parseInt(request.getParameter("w"));
 		double sp = Double.parseDouble(request.getParameter("sp"));
 		String token = request.getParameter("token");
-		GetObjectOutput obj;
+		ProteomeComparison cmp;
 		try {
-			obj = TaskHolder.createWsClient(token).getObject(new GetObjectParams()
-				.withWorkspace(ws).withType("ProteomeComparison").withId(id));
+			cmp = loadCmpObject(ws, id, token);
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
-		ProteomeComparison cmp = UObject.transformObjectToObject(obj.getData(), ProteomeComparison.class);
 		response.setContentType("image/png");
 		OutputStream out = response.getOutputStream();
 		BufferedImage img = draw(cmp, x, y, w, w, sp);
 		ImageIO.write(img, "PNG", out);
+	}
+
+	public static ProteomeComparison loadCmpObject(String ws, String id, String token)
+			throws IOException, JsonClientException, Exception {
+		UObject cmpObj = TaskHolder.createWsClient(token).getObjects(
+				Arrays.asList(new ObjectIdentity().withRef(ws + "/" + id))).get(0).getData();
+		return cmpObj.asClassInstance(ProteomeComparison.class);
 	}
 	
 	public static BufferedImage draw(ProteomeComparison cmp, int i0, int j0, int w0, int h0, double sp) {

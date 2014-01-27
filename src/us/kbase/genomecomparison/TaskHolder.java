@@ -17,14 +17,17 @@ import java.util.concurrent.TimeUnit;
 
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.Tuple3;
+import us.kbase.common.service.Tuple4;
 import us.kbase.common.service.UObject;
+import us.kbase.kbasegenomes.Feature;
+import us.kbase.kbasegenomes.Genome;
 import us.kbase.userandjobstate.InitProgress;
 import us.kbase.userandjobstate.Results;
 import us.kbase.userandjobstate.UserAndJobStateClient;
-import us.kbase.workspaceservice.GetObjectParams;
-import us.kbase.workspaceservice.ObjectData;
-import us.kbase.workspaceservice.SaveObjectParams;
-import us.kbase.workspaceservice.WorkspaceServiceClient;
+import us.kbase.workspace.ObjectIdentity;
+import us.kbase.workspace.ObjectSaveData;
+import us.kbase.workspace.SaveObjectsParams;
+import us.kbase.workspace.WorkspaceClient;
 
 public class TaskHolder {
 	private Map<String, Task> taskMap = new HashMap<String, Task>();
@@ -35,7 +38,8 @@ public class TaskHolder {
 	private final File tempDir;
 	private final File blastBin;
 	
-	private static final String wsUrl = "https://kbase.us/services/workspace/";
+	//private static final String wsUrl = "https://kbase.us/services/workspace/";
+	private static final String wsUrl = "http://140.221.84.209:7058/";
     //private static final String jobSrvUrl = "http://140.221.84.180:7083";
     private static final String jobSrvUrl = "https://kbase.us/services/userandjobstate/";
 	
@@ -235,8 +239,8 @@ public class TaskHolder {
 		return l.get(0).getScore();
 	}
 
-	public static WorkspaceServiceClient createWsClient(String token) throws Exception {
-		WorkspaceServiceClient ret = new WorkspaceServiceClient(new URL(wsUrl), new AuthToken(token));
+	public static WorkspaceClient createWsClient(String token) throws Exception {
+		WorkspaceClient ret = new WorkspaceClient(new URL(wsUrl), new AuthToken(token));
 		ret.setAuthAllowedForHttp(true);
 		return ret;
 	}
@@ -267,25 +271,23 @@ public class TaskHolder {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	private static List<InnerFeature> extractProteome(String ws, String genomeId, String token) throws Exception {
-		Map<String, Object> genome = (Map<String, Object>)createWsClient(token).getObject(
-				new GetObjectParams().withAuth(token).withWorkspace(ws)
-				.withId(genomeId).withType("Genome")).getData();
-		List<Map<String, Object>> features = (List<Map<String, Object>>)genome.get("features");
+		UObject genomeObj = createWsClient(token).getObjects(
+				Arrays.asList(new ObjectIdentity().withRef(ws + "/" + genomeId))).get(0).getData();
+		Genome genome = genomeObj.asClassInstance(Genome.class);
 		List<InnerFeature> ret = new ArrayList<InnerFeature>();
-		for (Map<String, Object> feature : features) {
-			String type = "" + feature.get("type");
+		for (Feature feature : genome.getFeatures()) {
+			String type = feature.getType();
 			if (!type.equals("CDS"))
 				continue;
 			InnerFeature inf = new InnerFeature();
-			inf.protName = "" + feature.get("id");
-			inf.seq = "" + feature.get("protein_translation");
-			List<Object> location = ((List<List<Object>>)feature.get("location")).get(0);
-			inf.contigName = "" + location.get(0);
-			int realStart = Integer.parseInt("" + location.get(1));
-			String dir = "" + location.get(2);
-			int len = Integer.parseInt("" + location.get(3));
+			inf.protName = feature.getId();
+			inf.seq = feature.getProteinTranslation();
+			Tuple4<String, Long, String, Long> location = feature.getLocation().get(0);
+			inf.contigName = location.getE1();
+			int realStart = (int)(long)location.getE2();
+			String dir = location.getE3();
+			int len = (int)(long)location.getE4();
 			inf.start = dir.equals("+") ? realStart : (realStart - len);
 			inf.stop = dir.equals("+") ? (realStart + len) : realStart;
 			ret.add(inf);
@@ -305,12 +307,16 @@ public class TaskHolder {
 		return ret;
 	}
 	
-	@SuppressWarnings("unchecked")
 	private void saveResult(String ws, String id, String token, ProteomeComparison res) throws Exception {
-		ObjectData data = new ObjectData();
-		data.getAdditionalProperties().putAll(UObject.transformObjectToObject(res, Map.class));
-		createWsClient(token).saveObject(new SaveObjectParams().withAuth(token).withWorkspace(ws)
-				.withType("ProteomeComparison").withId(id).withData(data));
+		ObjectSaveData data = new ObjectSaveData().withData(new UObject(res)).withType("GenomeComparison.ProteomeComparison");
+		try {
+			long objid = Long.parseLong(id);
+			data.withObjid(objid);
+		} catch (NumberFormatException ex) {
+			data.withName(id);
+		}
+		createWsClient(token).saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(
+				Arrays.asList(data)));
 	}
 	
 	public void stopAllThreads() {

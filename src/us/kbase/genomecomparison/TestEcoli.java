@@ -1,23 +1,8 @@
 package us.kbase.genomecomparison;
 
 import java.io.File;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 import us.kbase.auth.AuthService;
-import us.kbase.auth.AuthToken;
-import us.kbase.common.service.UObject;
-import us.kbase.genomecomparison.NcbiGenomeLoader.Feature;
-import us.kbase.workspaceservice.GetJobsParams;
-import us.kbase.workspaceservice.GetObjectOutput;
-import us.kbase.workspaceservice.GetObjectParams;
-import us.kbase.workspaceservice.ObjectData;
-import us.kbase.workspaceservice.SaveObjectParams;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -44,7 +29,7 @@ public class TestEcoli {
 		return AuthService.login("nardevuser1", "nardevuser2").getToken().toString();
 	}
 	
-	@SuppressWarnings("unchecked")
+	/*@SuppressWarnings("unchecked")
 	public static void runBlast(int genome1, int genome2) throws Exception {
 		String outId = "proteome_cmp_" + genome1 + "_" + genome2;
 		String token = getAuthToken();
@@ -74,22 +59,18 @@ public class TestEcoli {
 			Thread.sleep(5000);
 		}
 		System.out.println("Time: " + (System.currentTimeMillis() - time) + " ms.");
-		//th.stopAllThreads();
-	}
+	}*/
 
 	private static void createImage(String cmpId) throws Exception {
 		String token = getAuthToken();
-		GetObjectOutput out = TaskHolder.createWsClient(token).getObject(
-				new GetObjectParams().withWorkspace(ws)
-				.withType("ProteomeComparison").withId(cmpId));
-		ProteomeComparison cmp = UObject.transformObjectToObject(out.getData(), ProteomeComparison.class);
+		ProteomeComparison cmp = ComparisonImage.loadCmpObject(ws, cmpId, token);
 		new ObjectMapper().writeValue(new File(dir, cmpId + ".json"), cmp);
 		int w = cmp.getProteome1names().size() * 25 / 100;
 		int h = cmp.getProteome2names().size() * 25 / 100;
 		ComparisonImage.saveImage(cmp, 0, 0, w, h, 25, new File(dir, cmpId + ".png"));
 	}
 	
-	private static void uploadGenome(String genomeName) throws Exception {
+	/*private static void uploadGenome(String genomeName) throws Exception {
 		File workDir = new File("data"); 
 		List<Feature> proteins = NcbiGenomeLoader.loadFeatures(workDir, genomeName);
 		Map<String, Object> genome = new LinkedHashMap<String, Object>();
@@ -120,5 +101,5 @@ public class TestEcoli {
 		TaskHolder.createWsClient(token).saveObject(new SaveObjectParams().withAuth(token)
 				.withWorkspace(ws).withType("Genome").withId(genomeName)
 				.withData(savedData));
-	}
+	}*/
 }

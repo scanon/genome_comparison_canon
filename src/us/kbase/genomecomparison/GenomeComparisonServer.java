@@ -25,7 +25,12 @@ public class GenomeComparisonServer extends JsonServerServlet {
     private TaskHolder taskHolder = null;
     
     public void init(ServletConfig servletConfig) throws ServletException {
-        configPath = servletConfig.getInitParameter("config_file");
+        init(servletConfig.getInitParameter("config_file"));
+    }
+    
+    private GenomeComparisonServer init(String configPath) {
+    	this.configPath = configPath;
+    	return this;
     }
     
     private TaskHolder getTaskHolder() throws Exception {
@@ -75,10 +80,10 @@ public class GenomeComparisonServer extends JsonServerServlet {
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.out.println("Usage: <program> <server_port>");
+        if (args.length != 2) {
+            System.out.println("Usage: <program> <server_port> <path_to_config_file>");
             return;
         }
-        new GenomeComparisonServer().startupServer(Integer.parseInt(args[0]));
+        new GenomeComparisonServer().init(args[1]).startupServer(Integer.parseInt(args[0]));
     }
 }
