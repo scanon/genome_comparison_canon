@@ -25,12 +25,7 @@ public class GenomeComparisonServer extends JsonServerServlet {
     private TaskHolder taskHolder = null;
     
     public void init(ServletConfig servletConfig) throws ServletException {
-        init(servletConfig.getInitParameter("config_file"));
-    }
-    
-    private GenomeComparisonServer init(String configPath) {
-    	this.configPath = configPath;
-    	return this;
+        configPath = servletConfig.getInitParameter("config_file");
     }
     
     private TaskHolder getTaskHolder() throws Exception {
@@ -47,11 +42,15 @@ public class GenomeComparisonServer extends JsonServerServlet {
     					threadCount = Integer.parseInt(props.getProperty("thread.count"));
     				if (props.containsKey("temp.dir"))
     					tempDir = new File(props.getProperty("temp.dir"));
-    				if (props.contains("blast.bin"))
+    				if (props.containsKey("blast.bin"))
     					blastBin = new File(props.getProperty("blast.bin"));
-    				taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
+        		} else {
+        			System.out.println("Configuration file [" + new File(configPath).getAbsolutePath() + "] doesn't exist");
     			}
+    		} else {
+    			System.out.println("Configuration file was not set");
     		}
+			taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
     	}
     	return taskHolder;
     }
@@ -72,18 +71,18 @@ public class GenomeComparisonServer extends JsonServerServlet {
      */
     @JsonServerMethod(rpc = "GenomeComparison.blast_proteomes")
     public String blastProteomes(BlastProteomesParams input, AuthToken authPart) throws Exception {
-        String returnVal = null;
+    	String returnVal = null;
         //BEGIN blast_proteomes
-        returnVal = getTaskHolder().addTask(input, authPart.toString());
+    	returnVal = getTaskHolder().addTask(input, authPart.toString());
         //END blast_proteomes
         return returnVal;
     }
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.out.println("Usage: <program> <server_port> <path_to_config_file>");
+        if (args.length != 1) {
+            System.out.println("Usage: <program> <server_port>");
             return;
         }
-        new GenomeComparisonServer().init(args[1]).startupServer(Integer.parseInt(args[0]));
+        new GenomeComparisonServer().startupServer(Integer.parseInt(args[0]));
     }
 }

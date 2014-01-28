@@ -42,6 +42,8 @@ public class TaskHolder {
 	private static final String wsUrl = "http://140.221.84.209:7058/";
     //private static final String jobSrvUrl = "http://140.221.84.180:7083";
     private static final String jobSrvUrl = "https://kbase.us/services/userandjobstate/";
+    
+    private static final int MAX_ERROR_MESSAGE_LEN = 190;
 	
 	public TaskHolder(int threadCount, File tempDir, File blastBin) {
 		this.tempDir = tempDir;
@@ -92,7 +94,7 @@ public class TaskHolder {
 			final Map<String, List<InnerHit>> data1 = new LinkedHashMap<String, List<InnerHit>>();
 		    final Map<String, List<InnerHit>> data2 = new LinkedHashMap<String, List<InnerHit>>();
 			String maxEvalue = task.getParams().getMaxEvalue() == null ? "1e-10" : task.getParams().getMaxEvalue();
-			long time = System.currentTimeMillis();
+			//long time = System.currentTimeMillis();
 			BlastStarter.run(tempDir, proteome1, proteome2, blastBin, maxEvalue, new BlastStarter.ResultCallback() {
 				@Override
 				public void proteinPair(String name1, String name2, double ident,
@@ -191,16 +193,20 @@ public class TaskHolder {
 			}
 			ProteomeComparison res = new ProteomeComparison()
 				.withSubBbhPercent(subBbhPercent)
+				.withMaxEvalue(maxEvalue)
 				.withGenome1ws(task.getParams().getGenome1ws())
 				.withGenome1id(task.getParams().getGenome1id())
 				.withGenome2ws(task.getParams().getGenome2ws())
 				.withGenome2id(task.getParams().getGenome2id())
-				.withProteome1names(prot1names).withProteome1map(prot1map)
-				.withProteome2names(prot2names).withProteome2map(prot2map)
-				.withData1(data1new).withData2(data2new);
+				.withProteome1names(prot1names)
+				.withProteome1map(prot1map)
+				.withProteome2names(prot2names)
+				.withProteome2map(prot2map)
+				.withData1(data1new)
+				.withData2(data2new);
 			saveResult(task.getParams().getOutputWs(), task.getParams().getOutputId(), token, res);
 			completeTaskState(task, token, null, null);
-			time = System.currentTimeMillis() - time;
+			//time = System.currentTimeMillis() - time;
 			//System.out.println("Time: " + time + " ms.");
 		}catch(Throwable e) {
 			StringWriter sw = new StringWriter();
@@ -208,7 +214,15 @@ public class TaskHolder {
 			e.printStackTrace(pw);
 			pw.close();
 			try {
-				completeTaskState(task, token, e.getMessage(), sw.toString());
+				String errMsg = null;
+				if (e.getMessage() == null) {
+					errMsg = e.getClass().getSimpleName();
+				} else {
+					errMsg = "Error: " + e.getMessage();
+				}
+				if (errMsg.length() > MAX_ERROR_MESSAGE_LEN)
+					errMsg = errMsg.substring(0, MAX_ERROR_MESSAGE_LEN - 3) + "...";
+				completeTaskState(task, token, errMsg, sw.toString());
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
@@ -266,7 +280,7 @@ public class TaskHolder {
 					new Results().withWorkspaceurl(wsUrl).withWorkspaceids(
 							Arrays.asList(task.getParams().getOutputWs() + "/" + task.getParams().getOutputId())));
 		} else {
-			createJobClient(token).completeJob(task.getJobId(), token, "Error: " + errorMessage, 
+			createJobClient(token).completeJob(task.getJobId(), token, errorMessage, 
 					errorStacktrace, new Results()); 
 		}
 	}

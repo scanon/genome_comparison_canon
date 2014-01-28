@@ -1,8 +1,14 @@
 package us.kbase.genomecomparison;
 
 import java.io.File;
+import java.net.URL;
 
 import us.kbase.auth.AuthService;
+import us.kbase.auth.AuthToken;
+import us.kbase.common.service.Tuple7;
+import us.kbase.workspace.GetModuleInfoParams;
+import us.kbase.workspace.RegisterTypespecParams;
+import us.kbase.workspace.WorkspaceClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,48 +24,45 @@ public class TestEcoli {
 		"Escherichia_coli_O127_H6_E2348_69",
 		"Escherichia_coli_UM146"
 	};
-
+	//private static final String srvUrl = "http://140.221.85.98:8283/jsonrpc";
+	private static final String srvUrl = "http://localhost:8283";
+	
 	public static void main(String[] args) throws Exception {
-		//runBlast(0, 6);
-		createImage("proteome_cmp_0_2");
+		runBlast("Shewanella_ANA_3_uid58347", "Shewanella_baltica_BA175_uid52601");
+		//createImage("proteome_cmp_0_2");
 		//uploadGenome(genomeNames[6]);
+		//uploadSpec();
 	}
 	
 	private static String getAuthToken() throws Exception {
 		return AuthService.login("nardevuser1", "nardevuser2").getToken().toString();
 	}
 	
-	/*@SuppressWarnings("unchecked")
-	public static void runBlast(int genome1, int genome2) throws Exception {
-		String outId = "proteome_cmp_" + genome1 + "_" + genome2;
+	public static void runBlast(String genome1name, String genome2name) throws Exception {
+		String outId = genome1name + "_vs_" + genome2name + ".protcmp";
 		String token = getAuthToken();
-		//TaskHolder th = new TaskHolder(1, dir, new File("blast/macosx"));
-		GenomeComparisonClient cl = new GenomeComparisonClient(new URL("http://140.221.85.98:8283/jsonrpc"), new AuthToken(token));
+		GenomeComparisonClient cl = new GenomeComparisonClient(new URL(srvUrl), new AuthToken(token));
 		cl.setAuthAllowedForHttp(true);
 		String jobId = cl.blastProteomes(new BlastProteomesParams()
-				.withGenome1ws(ws).withGenome1id(genomeNames[genome1])
-				.withGenome2ws(ws).withGenome2id(genomeNames[genome2])
+				.withGenome1ws(ws).withGenome1id(genome1name + ".genome")
+				.withGenome2ws(ws).withGenome2id(genome2name + ".genome")
 				.withOutputWs(ws).withOutputId(outId));
 		long time = System.currentTimeMillis();
 		while (true) {
-			Map<String, Object> jobMap = (Map<String, Object>)TaskHolder.createWsClient(token).getJobs(
-					new GetJobsParams().withAuth(token).withJobids(Arrays.asList(jobId))).get(0);
-			String status = "" + jobMap.get("status");
+			Tuple7<String, String, String, Long, String, Long, Long> data = TaskHolder.createJobClient(token).getJobStatus(jobId);
+			String status = data.getE3();
+    		Long complete = data.getE6();
+    		Long wasError = data.getE7();
 			System.out.println("Task status: " + status);
-			if (status.equals("done")) {
-				Map<String, String> jobData = (Map<String, String>)jobMap.get("jobdata");
-				String error = jobData.get("error");
-				if (error != null) {
-					System.out.println("Error: " + error);
-				} else {
+			if (complete == 1L) {
+				if (wasError == 0L)
 					createImage(outId);
-				}
 				break;
 			}
 			Thread.sleep(5000);
 		}
 		System.out.println("Time: " + (System.currentTimeMillis() - time) + " ms.");
-	}*/
+	}
 
 	private static void createImage(String cmpId) throws Exception {
 		String token = getAuthToken();
@@ -102,4 +105,12 @@ public class TestEcoli {
 				.withWorkspace(ws).withType("Genome").withId(genomeName)
 				.withData(savedData));
 	}*/
+	
+	private static void uploadSpec() throws Exception {
+		String token = AuthService.login("rsutormin", "").getToken().toString();  //getAuthToken();
+		WorkspaceClient wc = TaskHolder.createWsClient(token);
+		//wc.registerTypespec(new RegisterTypespecParams().withSpec(spec))
+		//wc.releaseModule("GenomeComparison");
+		System.out.println(wc.getModuleInfo(new GetModuleInfoParams().withMod("GenomeComparison")));
+	}
 }
