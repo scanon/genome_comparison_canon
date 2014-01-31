@@ -277,7 +277,7 @@ public class TaskHolder {
 		gto = gc.annotateGenome(gto);
 		List<Feature> featuresToSave = UObject.transformObjectToObject(gto.getFeatures(), new TypeReference<List<Feature>>() {});
 		genome.setFeatures(featuresToSave);
-		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType(genomeData.getInfo().getE2());
+		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType("KBaseGenomes.Genome");
 		try {
 			long objid = Long.parseLong(params.getOutGenomeId());
 			data.withObjid(objid);

@@ -90,6 +90,7 @@ public class GenomeComparisonServer extends JsonServerServlet {
     public String annotateGenome(AnnotateGenomeParams input, AuthToken authPart) throws Exception {
         String returnVal = null;
         //BEGIN annotate_genome
+    	returnVal = getTaskHolder().addTask(input, authPart.toString());
         //END annotate_genome
         return returnVal;
     }

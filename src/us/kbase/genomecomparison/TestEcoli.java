@@ -70,7 +70,6 @@ public class TestEcoli {
 
 	private static void annotate() throws Exception {
 		String token = getAuthToken();
-		System.out.println(token);
 		String ws = "nardevuser1:home";
 		String genomeId = "Shewanella_W3_18_1_uid58341.genome";
 		long time = System.currentTimeMillis();

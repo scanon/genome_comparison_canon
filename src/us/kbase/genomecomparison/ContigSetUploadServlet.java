@@ -2,11 +2,9 @@ package us.kbase.genomecomparison;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -123,16 +121,11 @@ public class ContigSetUploadServlet extends HttpServlet {
 				wc.saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(Arrays.asList(data)));
 			}
 			response.getOutputStream().write("Contig Set was successfuly uploaded".getBytes());
-		} catch (Exception ex) {
+		} catch (Throwable ex) {
 			/*PrintWriter pw = new PrintWriter(new FileWriter(new File("log.txt"), true));
 			ex.printStackTrace(pw);
 			pw.close();*/
 			ex.printStackTrace(new PrintStream(response.getOutputStream()));
-			/*if (ex instanceof ServletException)
-				throw (ServletException)ex;
-			if (ex instanceof IOException)
-				throw (IOException)ex;
-			throw new ServletException(ex);*/
 		} finally {
 			if (file != null)
 				file.delete();
