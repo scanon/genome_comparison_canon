@@ -2,12 +2,15 @@ package us.kbase.genomecomparison;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Arrays;
 
 import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.Tuple7;
+import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.GetModuleInfoParams;
-import us.kbase.workspace.RegisterTypespecParams;
+import us.kbase.workspace.ObjectData;
+import us.kbase.workspace.ObjectIdentity;
 import us.kbase.workspace.WorkspaceClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -28,10 +31,11 @@ public class TestEcoli {
 	private static final String srvUrl = "http://localhost:8283";
 	
 	public static void main(String[] args) throws Exception {
-		runBlast("Shewanella_ANA_3_uid58347", "Shewanella_baltica_BA175_uid52601");
+		//runBlast("Shewanella_ANA_3_uid58347", "Shewanella_baltica_BA175_uid52601");
 		//createImage("proteome_cmp_0_2");
 		//uploadGenome(genomeNames[6]);
 		//uploadSpec();
+		annotate();
 	}
 	
 	private static String getAuthToken() throws Exception {
@@ -64,6 +68,24 @@ public class TestEcoli {
 		System.out.println("Time: " + (System.currentTimeMillis() - time) + " ms.");
 	}
 
+	private static void annotate() throws Exception {
+		String token = getAuthToken();
+		System.out.println(token);
+		String ws = "nardevuser1:home";
+		String genomeId = "Shewanella_W3_18_1_uid58341.genome";
+		long time = System.currentTimeMillis();
+		try {
+			new TaskHolder(1, new File("temp"), null).runAnnotateGenome(token, new AnnotateGenomeParams()
+				.withInGenomeWs(ws).withInGenomeId(genomeId).withOutGenomeWs(ws).withOutGenomeId(genomeId + ".2"));
+			ObjectData genomeData = TaskHolder.createWsClient(token).getObjects(Arrays.asList(
+					new ObjectIdentity().withRef(ws + "/" + genomeId + ".2"))).get(0);
+			Genome genome = genomeData.getData().asClassInstance(Genome.class);
+			System.out.println(genome.getFeatures().subList(0, 300));
+		} finally {
+			System.out.println("Time: " + (System.currentTimeMillis() - time) + " ms.");
+		}
+	}
+	
 	private static void createImage(String cmpId) throws Exception {
 		String token = getAuthToken();
 		ProteomeComparison cmp = ComparisonImage.loadCmpObject(ws, cmpId, token);

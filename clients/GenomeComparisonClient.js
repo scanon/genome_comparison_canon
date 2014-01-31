@@ -30,6 +30,16 @@ function GenomeComparison(url, auth, auth_cb) {
         deprecationWarning();
         return json_call_ajax("GenomeComparison.blast_proteomes", [input], 1, _callback, _error_callback);
     };
+
+    this.annotate_genome = function (input, _callback, _errorCallback) {
+    return json_call_ajax("GenomeComparison.annotate_genome",
+        [input], 1, _callback, _errorCallback);
+};
+
+    this.annotate_genome_async = function (input, _callback, _error_callback) {
+        deprecationWarning();
+        return json_call_ajax("GenomeComparison.annotate_genome", [input], 1, _callback, _error_callback);
+    };
  
 
     /*

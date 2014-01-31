@@ -90,8 +90,10 @@ public class FastaReader {
                 throw new IllegalStateException("No sequence for caption: " + protName);
             }
             return new String[] {protName, protSeq, protDescr};
-        }catch(Exception ex) {
-            return null;
+        } catch (IllegalStateException ex) {
+        	throw ex;
+        } catch (Exception ex) {
+            throw new IllegalStateException(ex);
         }
     }
     public void close() {

@@ -58,4 +58,19 @@ module GenomeComparison {
 	} blast_proteomes_params;
 
 	funcdef blast_proteomes(blast_proteomes_params input) returns (string job_id) authentication required;
+
+	/*
+		string in_genome_ws - workspace of input genome
+		string in_genome_id - id of input genome
+		string out_genome_ws - workspace of output genome
+		string out_genome_id - future id of output genome
+	*/
+	typedef structure {
+		string in_genome_ws;
+		string in_genome_id;
+		string out_genome_ws;
+		string out_genome_id;
+	} annotate_genome_params;
+	
+	funcdef annotate_genome(annotate_genome_params input) returns (string job_id) authentication required;
 };

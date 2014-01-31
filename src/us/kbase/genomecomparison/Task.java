@@ -2,24 +2,30 @@ package us.kbase.genomecomparison;
 
 public class Task {
 	private String jobId;
-	private BlastProteomesParams params;
+	private Object params;
 	private String authToken;
+	private String outRef;
 	
-	public Task(String jobId, BlastProteomesParams params, String authToken) {
+	public Task(String jobId, Object params, String authToken, String outRef) {
 		this.jobId = jobId;
 		this.params = params;
 		this.authToken = authToken;
+		this.outRef = outRef;
 	}
 	
 	public String getJobId() {
 		return jobId;
 	}
 	
-	public BlastProteomesParams getParams() {
+	public Object getParams() {
 		return params;
 	}
 	
 	public String getAuthToken() {
 		return authToken;
+	}
+	
+	public String getOutRef() {
+		return outRef;
 	}
 }

@@ -58,4 +58,21 @@ public class GenomeComparisonClient {
         List<String> res = caller.jsonrpcCall("GenomeComparison.blast_proteomes", args, retType, true, true);
         return res.get(0);
     }
+
+    /**
+     * <p>Original spec-file function name: annotate_genome</p>
+     * <pre>
+     * </pre>
+     * @param   input   instance of type {@link us.kbase.genomecomparison.AnnotateGenomeParams AnnotateGenomeParams} (original type "annotate_genome_params")
+     * @return   parameter "job_id" of String
+     * @throws IOException if an IO exception occurs
+     * @throws JsonClientException if a JSON RPC exception occurs
+     */
+    public String annotateGenome(AnnotateGenomeParams input) throws IOException, JsonClientException {
+        List<Object> args = new ArrayList<Object>();
+        args.add(input);
+        TypeReference<List<String>> retType = new TypeReference<List<String>>() {};
+        List<String> res = caller.jsonrpcCall("GenomeComparison.annotate_genome", args, retType, true, true);
+        return res.get(0);
+    }
 }

@@ -3,6 +3,7 @@ package us.kbase.genomecomparison;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.JsonServerMethod;
 import us.kbase.common.service.JsonServerServlet;
+
 //BEGIN_HEADER
 import java.io.File;
 import java.io.FileInputStream;
@@ -71,10 +72,25 @@ public class GenomeComparisonServer extends JsonServerServlet {
      */
     @JsonServerMethod(rpc = "GenomeComparison.blast_proteomes")
     public String blastProteomes(BlastProteomesParams input, AuthToken authPart) throws Exception {
-    	String returnVal = null;
+        String returnVal = null;
         //BEGIN blast_proteomes
     	returnVal = getTaskHolder().addTask(input, authPart.toString());
         //END blast_proteomes
+        return returnVal;
+    }
+
+    /**
+     * <p>Original spec-file function name: annotate_genome</p>
+     * <pre>
+     * </pre>
+     * @param   input   instance of type {@link us.kbase.genomecomparison.AnnotateGenomeParams AnnotateGenomeParams} (original type "annotate_genome_params")
+     * @return   parameter "job_id" of String
+     */
+    @JsonServerMethod(rpc = "GenomeComparison.annotate_genome")
+    public String annotateGenome(AnnotateGenomeParams input, AuthToken authPart) throws Exception {
+        String returnVal = null;
+        //BEGIN annotate_genome
+        //END annotate_genome
         return returnVal;
     }
 

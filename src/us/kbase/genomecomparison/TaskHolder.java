@@ -15,15 +15,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.Tuple3;
 import us.kbase.common.service.Tuple4;
 import us.kbase.common.service.UObject;
+import us.kbase.genomeannotation.GenomeAnnotationClient;
+import us.kbase.genomeannotation.GenomeTO;
+import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
 import us.kbase.userandjobstate.InitProgress;
 import us.kbase.userandjobstate.Results;
 import us.kbase.userandjobstate.UserAndJobStateClient;
+import us.kbase.workspace.ObjectData;
 import us.kbase.workspace.ObjectIdentity;
 import us.kbase.workspace.ObjectSaveData;
 import us.kbase.workspace.SaveObjectsParams;
@@ -42,6 +49,7 @@ public class TaskHolder {
 	private static final String wsUrl = "http://140.221.84.209:7058/";
     //private static final String jobSrvUrl = "http://140.221.84.180:7083";
     private static final String jobSrvUrl = "https://kbase.us/services/userandjobstate/";
+    private static final String gaUrl = "https://kbase.us/services/genome_annotation";
     
     private static final int MAX_ERROR_MESSAGE_LEN = 190;
 	
@@ -53,10 +61,20 @@ public class TaskHolder {
 			allThreads[i] = startNewThread(i);
 		}
 	}
-	
-	public synchronized String addTask(BlastProteomesParams params, String authToken) throws Exception {
-		String jobId = createQueuedTaskJob(params, authToken);
-		Task task = new Task(jobId, params, authToken);
+
+	public String addTask(BlastProteomesParams params, String authToken) throws Exception {
+		String outRef = params.getOutputWs() + "/" + params.getOutputId();
+		return addTask(params, authToken, "Blast proteomes of two genomes", outRef);
+	}
+
+	public String addTask(AnnotateGenomeParams params, String authToken) throws Exception {
+		String outRef = params.getOutGenomeWs() + "/" + params.getOutGenomeId();
+		return addTask(params, authToken, "Blast proteomes of two genomes", outRef);
+	}
+
+	private synchronized String addTask(Object params, String authToken, String description, String outRef) throws Exception {
+		String jobId = createQueuedTaskJob(description, authToken);
+		Task task = new Task(jobId, params, authToken, outRef);
 		taskQueue.addLast(task);
 		taskMap.put(task.getJobId(), task);
 		synchronized (idleMonitor) {
@@ -85,130 +103,14 @@ public class TaskHolder {
 		String token = task.getAuthToken();
 		try {
 			changeTaskStateIntoRunning(task, token);
-			List<InnerFeature> features1 = extractProteome(task.getParams().getGenome1ws(), 
-					task.getParams().getGenome1id(), token);
-			Map<String, String> proteome1 = featuresToProtMap(features1);
-			List<InnerFeature> features2 = extractProteome(task.getParams().getGenome2ws(), 
-					task.getParams().getGenome2id(), token);
-			Map<String, String> proteome2 = featuresToProtMap(features2);
-			final Map<String, List<InnerHit>> data1 = new LinkedHashMap<String, List<InnerHit>>();
-		    final Map<String, List<InnerHit>> data2 = new LinkedHashMap<String, List<InnerHit>>();
-			String maxEvalue = task.getParams().getMaxEvalue() == null ? "1e-10" : task.getParams().getMaxEvalue();
-			//long time = System.currentTimeMillis();
-			BlastStarter.run(tempDir, proteome1, proteome2, blastBin, maxEvalue, new BlastStarter.ResultCallback() {
-				@Override
-				public void proteinPair(String name1, String name2, double ident,
-						int alnLen, int mismatch, int gapopens, int qstart, int qend,
-						int tstart, int tend, String eval, double bitScore) {
-					InnerHit h = new InnerHit().withId1(name1).withId2(name2).withScore(bitScore);
-					List<InnerHit> l1 = data1.get(name1);
-					if (l1 == null) {
-						l1 = new ArrayList<InnerHit>();
-						data1.put(name1, l1);
-					}
-					l1.add(h);
-					List<InnerHit> l2 = data2.get(name2);
-					if (l2 == null) {
-						l2 = new ArrayList<InnerHit>();
-						data2.put(name2, l2);
-					}
-					l2.add(h);
-				}
-			});
-			Comparator<InnerHit> hcmp = new Comparator<InnerHit>() {
-				@Override
-				public int compare(InnerHit o1, InnerHit o2) {
-					int ret = Double.compare(o2.getScore(), o1.getScore());
-					if (ret == 0) {
-						if (o1.getPercentOfBestScore() != null && o2.getPercentOfBestScore() != null) {
-							ret = Utils.compare(o2.getPercentOfBestScore(), o1.getPercentOfBestScore());
-						}
-					}
-					return ret;
-				}
-			};
-			Double subBbhPercentParam = task.getParams().getSubBbhPercent();
-			double subBbhPercent = subBbhPercentParam == null ? 90 : subBbhPercentParam;
-			for (Map.Entry<String, List<InnerHit>> entry : data1.entrySet()) 
-				Collections.sort(entry.getValue(), hcmp);
-			for (Map.Entry<String, List<InnerHit>> entry : data2.entrySet()) 
-				Collections.sort(entry.getValue(), hcmp);
-			for (Map.Entry<String, List<InnerHit>> entry : data1.entrySet()) {
-				List<InnerHit> l = entry.getValue();
-				double best1 = l.get(0).getScore();
-				for (InnerHit h : l) {
-					double best2 = getBestScore(h.getId2(), data2);
-					h.setPercentOfBestScore(Math.round(h.getScore() * 100.0 / Math.max(best1, best2) + 1e-6));
-				}
-				for (int pos = l.size() - 1; pos > 0; pos--) 
-					if (l.get(pos).getPercentOfBestScore() < subBbhPercent)
-						l.remove(pos);
-				Collections.sort(entry.getValue(), hcmp);
+			Object params = task.getParams();
+			if (params instanceof BlastProteomesParams) {
+				runBlastProteomes(token, (BlastProteomesParams)params);
+			} else {
+				runAnnotateGenome(token, (AnnotateGenomeParams)params);
 			}
-			for (Map.Entry<String, List<InnerHit>> entry : data2.entrySet()) {
-				List<InnerHit> l = entry.getValue();
-				double best2 = l.get(0).getScore();
-				for (InnerHit h : l) {
-					double best1 = getBestScore(h.getId1(), data1);
-					h.setPercentOfBestScore(Math.round(h.getScore() * 100.0 / Math.max(best1, best2) + 1e-6));
-				}
-				for (int pos = l.size() - 1; pos > 0; pos--) 
-					if (l.get(pos).getPercentOfBestScore() < subBbhPercent)
-						l.remove(pos);
-				Collections.sort(entry.getValue(), hcmp);
-			}
-			List<String> prot1names = new ArrayList<String>();
-			Map<String, Long> prot1map = new HashMap<String, Long>();
-			linkedMapToPos(proteome1, prot1names, prot1map);
-			List<String> prot2names = new ArrayList<String>();
-			Map<String, Long> prot2map = new HashMap<String, Long>();
-			linkedMapToPos(proteome2, prot2names, prot2map);
-			List<List<Tuple3<Long, Long, Long>>> data1new = new ArrayList<List<Tuple3<Long, Long, Long>>>();
-			for (String prot1name : prot1names) {
-				List<Tuple3<Long, Long, Long>> hits = new ArrayList<Tuple3<Long, Long, Long>>();
-				data1new.add(hits);
-				List<InnerHit> ihits = data1.get(prot1name);
-				if (ihits == null)
-					continue;
-				for (InnerHit ih : ihits) {
-					Tuple3<Long, Long, Long> h = new Tuple3<Long, Long, Long>()
-							.withE1(prot2map.get(ih.getId2())).withE2(Math.round(ih.getScore() * 100))
-							.withE3(ih.getPercentOfBestScore());
-					hits.add(h);
-				}
-			}
-			List<List<Tuple3<Long, Long, Long>>> data2new = new ArrayList<List<Tuple3<Long, Long, Long>>>();
-			for (String prot2name : prot2names) {
-				List<Tuple3<Long, Long, Long>> hits = new ArrayList<Tuple3<Long, Long, Long>>();
-				data2new.add(hits);
-				List<InnerHit> ihits = data2.get(prot2name);
-				if (ihits == null)
-					continue;
-				for (InnerHit ih : ihits) {
-					Tuple3<Long, Long, Long> h = new Tuple3<Long, Long, Long>()
-							.withE1(prot1map.get(ih.getId1())).withE2(Math.round(ih.getScore() * 100))
-							.withE3(ih.getPercentOfBestScore());
-					hits.add(h);
-				}
-			}
-			ProteomeComparison res = new ProteomeComparison()
-				.withSubBbhPercent(subBbhPercent)
-				.withMaxEvalue(maxEvalue)
-				.withGenome1ws(task.getParams().getGenome1ws())
-				.withGenome1id(task.getParams().getGenome1id())
-				.withGenome2ws(task.getParams().getGenome2ws())
-				.withGenome2id(task.getParams().getGenome2id())
-				.withProteome1names(prot1names)
-				.withProteome1map(prot1map)
-				.withProteome2names(prot2names)
-				.withProteome2map(prot2map)
-				.withData1(data1new)
-				.withData2(data2new);
-			saveResult(task.getParams().getOutputWs(), task.getParams().getOutputId(), token, res);
 			completeTaskState(task, token, null, null);
-			//time = System.currentTimeMillis() - time;
-			//System.out.println("Time: " + time + " ms.");
-		}catch(Throwable e) {
+		} catch (Throwable e) {
 			StringWriter sw = new StringWriter();
 			PrintWriter pw = new PrintWriter(sw);
 			e.printStackTrace(pw);
@@ -227,7 +129,163 @@ public class TaskHolder {
 				ex.printStackTrace();
 			}
 		}
-		
+	}
+
+	private void runBlastProteomes(String token,
+			BlastProteomesParams params) throws Exception {
+		List<InnerFeature> features1 = extractProteome(params.getGenome1ws(), 
+				params.getGenome1id(), token);
+		Map<String, String> proteome1 = featuresToProtMap(features1);
+		List<InnerFeature> features2 = extractProteome(params.getGenome2ws(), 
+				params.getGenome2id(), token);
+		Map<String, String> proteome2 = featuresToProtMap(features2);
+		final Map<String, List<InnerHit>> data1 = new LinkedHashMap<String, List<InnerHit>>();
+		final Map<String, List<InnerHit>> data2 = new LinkedHashMap<String, List<InnerHit>>();
+		String maxEvalue = params.getMaxEvalue() == null ? "1e-10" : params.getMaxEvalue();
+		BlastStarter.run(tempDir, proteome1, proteome2, blastBin, maxEvalue, new BlastStarter.ResultCallback() {
+			@Override
+			public void proteinPair(String name1, String name2, double ident,
+					int alnLen, int mismatch, int gapopens, int qstart, int qend,
+					int tstart, int tend, String eval, double bitScore) {
+				InnerHit h = new InnerHit().withId1(name1).withId2(name2).withScore(bitScore);
+				List<InnerHit> l1 = data1.get(name1);
+				if (l1 == null) {
+					l1 = new ArrayList<InnerHit>();
+					data1.put(name1, l1);
+				}
+				l1.add(h);
+				List<InnerHit> l2 = data2.get(name2);
+				if (l2 == null) {
+					l2 = new ArrayList<InnerHit>();
+					data2.put(name2, l2);
+				}
+				l2.add(h);
+			}
+		});
+		Comparator<InnerHit> hcmp = new Comparator<InnerHit>() {
+			@Override
+			public int compare(InnerHit o1, InnerHit o2) {
+				int ret = Double.compare(o2.getScore(), o1.getScore());
+				if (ret == 0) {
+					if (o1.getPercentOfBestScore() != null && o2.getPercentOfBestScore() != null) {
+						ret = Utils.compare(o2.getPercentOfBestScore(), o1.getPercentOfBestScore());
+					}
+				}
+				return ret;
+			}
+		};
+		Double subBbhPercentParam = params.getSubBbhPercent();
+		double subBbhPercent = subBbhPercentParam == null ? 90 : subBbhPercentParam;
+		for (Map.Entry<String, List<InnerHit>> entry : data1.entrySet()) 
+			Collections.sort(entry.getValue(), hcmp);
+		for (Map.Entry<String, List<InnerHit>> entry : data2.entrySet()) 
+			Collections.sort(entry.getValue(), hcmp);
+		for (Map.Entry<String, List<InnerHit>> entry : data1.entrySet()) {
+			List<InnerHit> l = entry.getValue();
+			double best1 = l.get(0).getScore();
+			for (InnerHit h : l) {
+				double best2 = getBestScore(h.getId2(), data2);
+				h.setPercentOfBestScore(Math.round(h.getScore() * 100.0 / Math.max(best1, best2) + 1e-6));
+			}
+			for (int pos = l.size() - 1; pos > 0; pos--) 
+				if (l.get(pos).getPercentOfBestScore() < subBbhPercent)
+					l.remove(pos);
+			Collections.sort(entry.getValue(), hcmp);
+		}
+		for (Map.Entry<String, List<InnerHit>> entry : data2.entrySet()) {
+			List<InnerHit> l = entry.getValue();
+			double best2 = l.get(0).getScore();
+			for (InnerHit h : l) {
+				double best1 = getBestScore(h.getId1(), data1);
+				h.setPercentOfBestScore(Math.round(h.getScore() * 100.0 / Math.max(best1, best2) + 1e-6));
+			}
+			for (int pos = l.size() - 1; pos > 0; pos--) 
+				if (l.get(pos).getPercentOfBestScore() < subBbhPercent)
+					l.remove(pos);
+			Collections.sort(entry.getValue(), hcmp);
+		}
+		List<String> prot1names = new ArrayList<String>();
+		Map<String, Long> prot1map = new HashMap<String, Long>();
+		linkedMapToPos(proteome1, prot1names, prot1map);
+		List<String> prot2names = new ArrayList<String>();
+		Map<String, Long> prot2map = new HashMap<String, Long>();
+		linkedMapToPos(proteome2, prot2names, prot2map);
+		List<List<Tuple3<Long, Long, Long>>> data1new = new ArrayList<List<Tuple3<Long, Long, Long>>>();
+		for (String prot1name : prot1names) {
+			List<Tuple3<Long, Long, Long>> hits = new ArrayList<Tuple3<Long, Long, Long>>();
+			data1new.add(hits);
+			List<InnerHit> ihits = data1.get(prot1name);
+			if (ihits == null)
+				continue;
+			for (InnerHit ih : ihits) {
+				Tuple3<Long, Long, Long> h = new Tuple3<Long, Long, Long>()
+						.withE1(prot2map.get(ih.getId2())).withE2(Math.round(ih.getScore() * 100))
+						.withE3(ih.getPercentOfBestScore());
+				hits.add(h);
+			}
+		}
+		List<List<Tuple3<Long, Long, Long>>> data2new = new ArrayList<List<Tuple3<Long, Long, Long>>>();
+		for (String prot2name : prot2names) {
+			List<Tuple3<Long, Long, Long>> hits = new ArrayList<Tuple3<Long, Long, Long>>();
+			data2new.add(hits);
+			List<InnerHit> ihits = data2.get(prot2name);
+			if (ihits == null)
+				continue;
+			for (InnerHit ih : ihits) {
+				Tuple3<Long, Long, Long> h = new Tuple3<Long, Long, Long>()
+						.withE1(prot1map.get(ih.getId1())).withE2(Math.round(ih.getScore() * 100))
+						.withE3(ih.getPercentOfBestScore());
+				hits.add(h);
+			}
+		}
+		ProteomeComparison res = new ProteomeComparison()
+			.withSubBbhPercent(subBbhPercent)
+			.withMaxEvalue(maxEvalue)
+			.withGenome1ws(params.getGenome1ws())
+			.withGenome1id(params.getGenome1id())
+			.withGenome2ws(params.getGenome2ws())
+			.withGenome2id(params.getGenome2id())
+			.withProteome1names(prot1names)
+			.withProteome1map(prot1map)
+			.withProteome2names(prot2names)
+			.withProteome2map(prot2map)
+			.withData1(data1new)
+			.withData2(data2new);
+		saveResult(params.getOutputWs(), params.getOutputId(), token, res);
+	}
+	
+	public void runAnnotateGenome(String token,
+			AnnotateGenomeParams params) throws Exception {
+		ObjectData genomeData = createWsClient(token).getObjects(Arrays.asList(
+				new ObjectIdentity().withRef(params.getInGenomeWs() + "/" + params.getInGenomeId()))).get(0);
+		Genome genome = genomeData.getData().asClassInstance(Genome.class);
+		String contigSetRef = genome.getContigsetRef();
+		UObject contigSetObj = createWsClient(token).getObjects(Arrays.asList(
+				new ObjectIdentity().withRef(contigSetRef))).get(0).getData();
+		ContigSet contigSet = contigSetObj.asClassInstance(ContigSet.class);
+		List<us.kbase.genomeannotation.Contig> gtoContigs = new ArrayList<us.kbase.genomeannotation.Contig>();
+		for (us.kbase.kbasegenomes.Contig origContig : contigSet.getContigs()) {
+			gtoContigs.add(new us.kbase.genomeannotation.Contig().withId(origContig.getId()).withDna(origContig.getSequence()));
+		}
+		GenomeTO gto = new GenomeTO().withContigs(gtoContigs).withDomain(genome.getDomain())
+				.withFeatures(Collections.<us.kbase.genomeannotation.Feature>emptyList())
+				.withGeneticCode(genome.getGeneticCode()).withId(genome.getId())
+				.withScientificName(genome.getScientificName()).withSource(genome.getSource())
+				.withSourceId(genome.getSourceId());
+		new ObjectMapper().writeValue(new File("GenomeTO.json"), gto);
+		GenomeAnnotationClient gc = new GenomeAnnotationClient(new URL(gaUrl));
+		gto = gc.annotateGenome(gto);
+		List<Feature> featuresToSave = UObject.transformObjectToObject(gto.getFeatures(), new TypeReference<List<Feature>>() {});
+		genome.setFeatures(featuresToSave);
+		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType(genomeData.getInfo().getE2());
+		try {
+			long objid = Long.parseLong(params.getOutGenomeId());
+			data.withObjid(objid);
+		} catch (NumberFormatException ex) {
+			data.withName(params.getOutGenomeId());
+		}
+		createWsClient(token).saveObjects(new SaveObjectsParams().withWorkspace(params.getOutGenomeWs()).withObjects(
+				Arrays.asList(data)));
 	}
 	
 	private static Map<String, String> featuresToProtMap(List<InnerFeature> features) {
@@ -265,8 +323,8 @@ public class TaskHolder {
 		return ret;
 	}
 
-	private String createQueuedTaskJob(BlastProteomesParams params, String token) throws Exception {
-		return createJobClient(token).createAndStartJob(token, "queued", "Blast proteomes of two genomes", 
+	private String createQueuedTaskJob(String description, String token) throws Exception {
+		return createJobClient(token).createAndStartJob(token, "queued", description, 
 				new InitProgress().withPtype("none"), null);
 	}
 
@@ -278,7 +336,7 @@ public class TaskHolder {
 		if (errorMessage == null) {
 			createJobClient(token).completeJob(task.getJobId(), token, "done", null, 
 					new Results().withWorkspaceurl(wsUrl).withWorkspaceids(
-							Arrays.asList(task.getParams().getOutputWs() + "/" + task.getParams().getOutputId())));
+							Arrays.asList(task.getOutRef())));
 		} else {
 			createJobClient(token).completeJob(task.getJobId(), token, errorMessage, 
 					errorStacktrace, new Results()); 

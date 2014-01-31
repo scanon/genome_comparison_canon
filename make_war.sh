@@ -14,7 +14,7 @@ CURRENT_DIR="$(pwd)"
 DIST_DIR=$CURRENT_DIR/dist
 WAR_FILE=$DIST_DIR/service.war
 SRC_DIR=./src
-JARS=$2/kbase/auth/kbase-auth-1380919426-d35c17d.jar:$2/servlet/servlet-api-2.5.jar:$2/jackson/jackson-annotations-2.2.3.jar:$2/jackson/jackson-core-2.2.3.jar:$2/jackson/jackson-databind-2.2.3.jar:$2/jetty/jetty-all-7.0.0.jar:$2/syslog4j/syslog4j-0.9.46.jar:$2/ini4j/ini4j-0.5.2.jar
+JARS=$2/kbase/auth/kbase-auth-1380919426-d35c17d.jar:$2/servlet/servlet-api-2.5.jar:$2/jackson/jackson-annotations-2.2.3.jar:$2/jackson/jackson-core-2.2.3.jar:$2/jackson/jackson-databind-2.2.3.jar:$2/jetty/jetty-all-7.0.0.jar:$2/syslog4j/syslog4j-0.9.46.jar:$2/ini4j/ini4j-0.5.2.jar:$2/apache_commons/commons-fileupload-1.2.2.jar
 CLASSPATH="-classpath $JARS"
 CLASSES_DIR=$WEB_INF_DIR/classes
 LIB_DIR=$WEB_INF_DIR/lib
@@ -49,6 +49,14 @@ cat > $WEB_INF_DIR/web.xml <<EOF
         <servlet-name>ImageServlet</servlet-name>
         <servlet-class>us.kbase.genomecomparison.ComparisonImage</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ContigSetUploadServlet</servlet-name>
+        <servlet-class>us.kbase.genomecomparison.ContigSetUploadServlet</servlet-class>
+        <init-param>
+            <param-name>config_file</param-name> 
+            <param-value>$CONFIG_FILE</param-value> 
+        </init-param>
+    </servlet>
     <servlet-mapping>
         <servlet-name>JsonRpcServlet</servlet-name>
         <url-pattern>/jsonrpc</url-pattern>
@@ -56,6 +64,10 @@ cat > $WEB_INF_DIR/web.xml <<EOF
     <servlet-mapping>
         <servlet-name>ImageServlet</servlet-name>
         <url-pattern>/image</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ContigSetUploadServlet</servlet-name>
+        <url-pattern>/uploader</url-pattern>
     </servlet-mapping>
 </web-app>
 EOF
