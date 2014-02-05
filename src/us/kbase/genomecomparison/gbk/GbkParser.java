@@ -166,8 +166,8 @@ public class GbkParser {
             }
 
             @Override
-            public void addHeader(String contigName, String headerType, List<GbkSubheader> items) throws Exception {
-                pw.println("addHeader: contigName=" + contigName + ", type=" + headerType + ", subheader=" + items);
+            public void addHeader(String contigName, String headerType, String value, List<GbkSubheader> items) throws Exception {
+                pw.println("addHeader: contigName=" + contigName + ", type=" + headerType + ", value=" + value + ", subheader=" + items);
             }
 
             @Override

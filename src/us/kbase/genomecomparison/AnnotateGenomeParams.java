@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
  * string in_genome_id - id of input genome
  * string out_genome_ws - workspace of output genome
  * string out_genome_id - future id of output genome
+ * int seed_annotation_only - optional flag (default value is 0) preventing gene calling
  * </pre>
  * 
  */
@@ -27,7 +28,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
     "in_genome_ws",
     "in_genome_id",
     "out_genome_ws",
-    "out_genome_id"
+    "out_genome_id",
+    "seed_annotation_only"
 })
 public class AnnotateGenomeParams {
 
@@ -39,6 +41,8 @@ public class AnnotateGenomeParams {
     private String outGenomeWs;
     @JsonProperty("out_genome_id")
     private String outGenomeId;
+    @JsonProperty("seed_annotation_only")
+    private Long seedAnnotationOnly;
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
     @JsonProperty("in_genome_ws")
@@ -101,6 +105,21 @@ public class AnnotateGenomeParams {
         return this;
     }
 
+    @JsonProperty("seed_annotation_only")
+    public Long getSeedAnnotationOnly() {
+        return seedAnnotationOnly;
+    }
+
+    @JsonProperty("seed_annotation_only")
+    public void setSeedAnnotationOnly(Long seedAnnotationOnly) {
+        this.seedAnnotationOnly = seedAnnotationOnly;
+    }
+
+    public AnnotateGenomeParams withSeedAnnotationOnly(Long seedAnnotationOnly) {
+        this.seedAnnotationOnly = seedAnnotationOnly;
+        return this;
+    }
+
     @JsonAnyGetter
     public Map<String, Object> getAdditionalProperties() {
         return this.additionalProperties;
@@ -113,7 +132,7 @@ public class AnnotateGenomeParams {
 
     @Override
     public String toString() {
-        return ((((((((((("AnnotateGenomeParams"+" [inGenomeWs=")+ inGenomeWs)+", inGenomeId=")+ inGenomeId)+", outGenomeWs=")+ outGenomeWs)+", outGenomeId=")+ outGenomeId)+", additionalProperties=")+ additionalProperties)+"]");
+        return ((((((((((((("AnnotateGenomeParams"+" [inGenomeWs=")+ inGenomeWs)+", inGenomeId=")+ inGenomeId)+", outGenomeWs=")+ outGenomeWs)+", outGenomeId=")+ outGenomeId)+", seedAnnotationOnly=")+ seedAnnotationOnly)+", additionalProperties=")+ additionalProperties)+"]");
     }
 
 }

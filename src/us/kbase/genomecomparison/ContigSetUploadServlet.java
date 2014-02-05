@@ -1,13 +1,16 @@
 package us.kbase.genomecomparison;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -25,9 +28,18 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
+import us.kbase.common.service.Tuple3;
+import us.kbase.common.service.Tuple4;
 import us.kbase.common.service.UObject;
+import us.kbase.genomecomparison.gbk.GbkCallback;
+import us.kbase.genomecomparison.gbk.GbkLocation;
+import us.kbase.genomecomparison.gbk.GbkParser;
+import us.kbase.genomecomparison.gbk.GbkQualifier;
+import us.kbase.genomecomparison.gbk.GbkSubheader;
 import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
+import us.kbase.kbasegenomes.Feature;
+import us.kbase.kbasegenomes.Genome;
 import us.kbase.workspace.ObjectSaveData;
 import us.kbase.workspace.SaveObjectsParams;
 import us.kbase.workspace.WorkspaceClient;
@@ -119,17 +131,124 @@ public class ContigSetUploadServlet extends HttpServlet {
 					data.withName(id);
 				}
 				wc.saveObjects(new SaveObjectsParams().withWorkspace(ws).withObjects(Arrays.asList(data)));
+				response.getOutputStream().write("Contig Set was successfuly uploaded".getBytes());
+			} else if (type.equals("genomegbk")) {
+				uploadGbk(file.getInputStream(), ws, id, token);
+				response.getOutputStream().write("Genome was successfuly uploaded".getBytes());
 			}
-			response.getOutputStream().write("Contig Set was successfuly uploaded".getBytes());
 		} catch (Throwable ex) {
-			/*PrintWriter pw = new PrintWriter(new FileWriter(new File("log.txt"), true));
-			ex.printStackTrace(pw);
-			pw.close();*/
 			ex.printStackTrace(new PrintStream(response.getOutputStream()));
 		} finally {
 			if (file != null)
 				file.delete();
 		}
+	}
+	
+	public static void uploadGbk(InputStream is, String ws, String id, String token) throws Exception {
+		BufferedReader br = new BufferedReader(new InputStreamReader(is));
+		final Map<String, Contig> contigMap = new LinkedHashMap<String, Contig>();
+		final Genome genome = new Genome()
+				.withComplete(1L).withDomain("Bacteria").withGeneticCode(11L).withId(id)
+				.withNumContigs(1L).withSource("NCBI").withSourceId("NCBI");
+		final List<Feature> features = new ArrayList<Feature>();
+		GbkParser.parse(br, new GbkCallback() {
+			@Override
+			public void setGenome(String genomeName, int taxId) throws Exception {
+				genome.withScientificName(genomeName);
+				if (genome.getTaxonomy() == null)
+					genome.withTaxonomy("Taxonomy ID: " + taxId);
+			}
+			@Override
+			public void addSeqPart(String contigName, int seqPartIndex, String seqPart,
+					int commonLen) throws Exception {
+				Contig contig = contigMap.get(contigName);
+				if (contig == null) {
+					contig = new Contig().withId(contigName).withName(contigName).withMd5("md5")
+							.withSequence("").withLength((long)commonLen);
+					contigMap.put(contigName, contig);
+				}
+				contig.withSequence(contig.getSequence() + seqPart);
+			}
+			@Override
+			public void addHeader(String contigName, String headerType, String value,
+					List<GbkSubheader> items) throws Exception {
+				if (headerType.equals("SOURCE")) {
+					String genomeName = value;
+					genome.withScientificName(genomeName);
+					for (GbkSubheader sub : items) {
+						if (sub.type.equals("ORGANISM")) {
+							String taxPath = sub.getValue();
+							if (taxPath.endsWith("."))
+								taxPath = taxPath.substring(0, taxPath.length() - 1).trim();
+							genome.withTaxonomy(taxPath + "; " + genomeName);
+						}
+					}
+				}
+			}
+			@Override
+			public void addFeature(String contigName, String featureType, int strand,
+					int start, int stop, List<GbkLocation> locations,
+					List<GbkQualifier> props) throws Exception {
+				Feature f = null;
+				if (featureType.equals("CDS")) {
+					 f = new Feature().withType("CDS");
+				} else if (featureType.toUpperCase().endsWith("RNA")) {
+					 f = new Feature().withType("rna");
+				}
+				if (f == null)
+					return;
+				List<Tuple4<String, Long, String, Long>> locList = new ArrayList<Tuple4<String, Long, String, Long>>();
+				for (GbkLocation loc : locations) {
+					long realStart = loc.strand > 0 ? loc.start : loc.stop;
+					String dir = loc.strand > 0 ? "+" : "-";
+					long len = loc.stop + 1 - loc.start;
+					locList.add(new Tuple4<String, Long, String, Long>().withE1(contigName)
+							.withE2(realStart).withE3(dir).withE4(len));
+				}
+				f.withLocation(locList).withAnnotations(new ArrayList<Tuple3<String, String, Long>>());
+				f.withAliases(new ArrayList<String>());
+				for (GbkQualifier prop : props) {
+					if (prop.type.equals("locus_tag")) {
+						f.setId(prop.getValue());
+					} else if (prop.type.equals("translation")) {
+						String seq = prop.getValue();
+						f.withProteinTranslation(seq).withProteinTranslationLength((long)seq.length());
+					} else if (prop.type.equals("note")) {
+						f.setFunction(prop.getValue());
+					} else if (prop.type.equals("product")) {
+						if (f.getFunction() == null)
+							f.setFunction(prop.getValue());
+					} else if (prop.type.equals("gene")) {
+						if (f.getId() == null)
+							f.setId(prop.getValue());
+						f.getAliases().add(prop.getValue());
+					} else if (prop.type.equals("protein_id")) {
+						f.getAliases().add(prop.getValue());
+					}
+				}
+				features.add(f);
+			}
+		});
+		WorkspaceClient wc = TaskHolder.createWsClient(token);
+		String contigId = id + ".contigset";
+		List<Long> contigLenths = new ArrayList<Long>();
+		long dnaLen = 0;
+		for (Contig contig : contigMap.values()) {
+			contigLenths.add(contig.getLength());
+			dnaLen += contig.getLength();
+		}
+		ContigSet contigSet = new ContigSet().withContigs(new ArrayList<Contig>(contigMap.values()))
+				.withId(id).withMd5("md5").withName(id)
+				.withSource("User uploaded data").withSourceId("USER").withType("Organism");
+		wc.saveObjects(new SaveObjectsParams().withWorkspace(ws)
+				.withObjects(Arrays.asList(new ObjectSaveData().withName(contigId)
+						.withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
+		genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLenths)
+				.withDnaSize(dnaLen).withContigsetRef(ws + "/" + contigId).withFeatures(features);
+		wc.saveObjects(new SaveObjectsParams().withWorkspace(ws)
+				.withObjects(Arrays.asList(new ObjectSaveData().withName(id)
+						.withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
+
 	}
 	
 	private static void check(Object obj, String param) throws ServletException {

@@ -15,6 +15,6 @@ public class GbkHeader extends GbkElement {
 		this.subheaders = new ArrayList<GbkSubheader>();
 	}
 	public void save(GbkLocus l, GbkCallback ret) throws Exception {
-		ret.addHeader(l.name, type, subheaders);
+		ret.addHeader(l.name, type, getValue(), subheaders);
 	}
 }

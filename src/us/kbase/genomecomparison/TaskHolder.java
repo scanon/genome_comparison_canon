@@ -274,7 +274,11 @@ public class TaskHolder {
 				.withSourceId(genome.getSourceId());
 		new ObjectMapper().writeValue(new File("GenomeTO.json"), gto);
 		GenomeAnnotationClient gc = new GenomeAnnotationClient(new URL(gaUrl));
-		gto = gc.annotateGenome(gto);
+		if (params.getSeedAnnotationOnly() == null || params.getSeedAnnotationOnly() == 0) {
+			gto = gc.annotateGenome(gto);
+		} else {
+			gto = gc.annotateProteins(gto);
+		}
 		List<Feature> featuresToSave = UObject.transformObjectToObject(gto.getFeatures(), new TypeReference<List<Feature>>() {});
 		genome.setFeatures(featuresToSave);
 		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType("KBaseGenomes.Genome");

@@ -61,7 +61,7 @@ public class GbkFeature extends GbkLocation {
 					if ((locations.size() == 0) || (maxStop<stop)) 
 						maxStop = stop;
 					GbkLocation loc = new GbkLocation(line_num, "location", null);
-					loc.strand = strand;
+					loc.strand = str;
 					loc.start = start;
 					loc.stop = stop;
 					locations.add(loc);

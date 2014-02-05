@@ -1,6 +1,7 @@
 package us.kbase.genomecomparison;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -35,7 +36,9 @@ public class TestEcoli {
 		//createImage("proteome_cmp_0_2");
 		//uploadGenome(genomeNames[6]);
 		//uploadSpec();
-		annotate();
+		//annotate();
+		ContigSetUploadServlet.uploadGbk(new FileInputStream(new File("test/NC_008577.gbk")), 
+				"nardevuser1:home", "Shewanella_ANA_3.genome", getAuthToken());
 	}
 	
 	private static String getAuthToken() throws Exception {
