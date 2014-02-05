@@ -36,9 +36,9 @@ public class TestEcoli {
 		//createImage("proteome_cmp_0_2");
 		//uploadGenome(genomeNames[6]);
 		//uploadSpec();
-		//annotate();
-		ContigSetUploadServlet.uploadGbk(new FileInputStream(new File("test/NC_008577.gbk")), 
-				"nardevuser1:home", "Shewanella_ANA_3.genome", getAuthToken());
+		annotate();
+		/*ContigSetUploadServlet.uploadGbk(new FileInputStream(new File("test/NC_008577.gbk")), 
+				"nardevuser1:home", "Shewanella_ANA_3.genome", getAuthToken());*/
 	}
 	
 	private static String getAuthToken() throws Exception {
@@ -74,13 +74,14 @@ public class TestEcoli {
 	private static void annotate() throws Exception {
 		String token = getAuthToken();
 		String ws = "nardevuser1:home";
-		String genomeId = "Shewanella_W3_18_1_uid58341.genome";
+		String genomeId = "Shewanella_ANA_3.genome";
 		long time = System.currentTimeMillis();
 		try {
-			new TaskHolder(1, new File("temp"), null).runAnnotateGenome(token, new AnnotateGenomeParams()
-				.withInGenomeWs(ws).withInGenomeId(genomeId).withOutGenomeWs(ws).withOutGenomeId(genomeId + ".2"));
+			new TaskHolder(1, new File("temp"), null).runAnnotateGenome(token, 
+					new AnnotateGenomeParams().withInGenomeWs(ws).withInGenomeId(genomeId)
+					.withOutGenomeWs(ws).withOutGenomeId(genomeId).withSeedAnnotationOnly(1L));
 			ObjectData genomeData = TaskHolder.createWsClient(token).getObjects(Arrays.asList(
-					new ObjectIdentity().withRef(ws + "/" + genomeId + ".2"))).get(0);
+					new ObjectIdentity().withRef(ws + "/" + genomeId))).get(0);
 			Genome genome = genomeData.getData().asClassInstance(Genome.class);
 			System.out.println(genome.getFeatures().subList(0, 300));
 		} finally {

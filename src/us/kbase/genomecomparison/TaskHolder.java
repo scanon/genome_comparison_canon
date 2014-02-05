@@ -24,6 +24,7 @@ import us.kbase.common.service.Tuple4;
 import us.kbase.common.service.UObject;
 import us.kbase.genomeannotation.GenomeAnnotationClient;
 import us.kbase.genomeannotation.GenomeTO;
+import us.kbase.kbasegenomes.Contig;
 import us.kbase.kbasegenomes.ContigSet;
 import us.kbase.kbasegenomes.Feature;
 import us.kbase.kbasegenomes.Genome;
@@ -267,11 +268,17 @@ public class TaskHolder {
 		for (us.kbase.kbasegenomes.Contig origContig : contigSet.getContigs()) {
 			gtoContigs.add(new us.kbase.genomeannotation.Contig().withId(origContig.getId()).withDna(origContig.getSequence()));
 		}
+		List<us.kbase.genomeannotation.Feature> featuresTO;
+		if (params.getSeedAnnotationOnly() == null || params.getSeedAnnotationOnly() == 0) {
+			featuresTO = Collections.<us.kbase.genomeannotation.Feature>emptyList();
+		} else {
+			featuresTO = UObject.transformObjectToObject(genome.getFeatures(), 
+					new TypeReference<List<us.kbase.genomeannotation.Feature>>() {});
+		}
 		GenomeTO gto = new GenomeTO().withContigs(gtoContigs).withDomain(genome.getDomain())
-				.withFeatures(Collections.<us.kbase.genomeannotation.Feature>emptyList())
-				.withGeneticCode(genome.getGeneticCode()).withId(genome.getId())
-				.withScientificName(genome.getScientificName()).withSource(genome.getSource())
-				.withSourceId(genome.getSourceId());
+				.withFeatures(featuresTO).withGeneticCode(genome.getGeneticCode())
+				.withId(genome.getId()).withScientificName(genome.getScientificName())
+				.withSource(genome.getSource()).withSourceId(genome.getSourceId());
 		new ObjectMapper().writeValue(new File("GenomeTO.json"), gto);
 		GenomeAnnotationClient gc = new GenomeAnnotationClient(new URL(gaUrl));
 		if (params.getSeedAnnotationOnly() == null || params.getSeedAnnotationOnly() == 0) {
@@ -281,6 +288,8 @@ public class TaskHolder {
 		}
 		List<Feature> featuresToSave = UObject.transformObjectToObject(gto.getFeatures(), new TypeReference<List<Feature>>() {});
 		genome.setFeatures(featuresToSave);
+		if (genome.getGcContent() == null)
+			genome.setGcContent(calculateGcContent(contigSet));
 		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType("KBaseGenomes.Genome");
 		try {
 			long objid = Long.parseLong(params.getOutGenomeId());
@@ -290,6 +299,23 @@ public class TaskHolder {
 		}
 		createWsClient(token).saveObjects(new SaveObjectsParams().withWorkspace(params.getOutGenomeWs()).withObjects(
 				Arrays.asList(data)));
+	}
+	
+	public static double calculateGcContent(ContigSet contigs) {
+		int at = 0;
+		int gc = 0;
+		for (Contig contig : contigs.getContigs()) {
+			String seq = contig.getSequence();
+			for (int i = 0; i < seq.length(); i++) {
+				char ch = seq.charAt(i);
+				if (ch == 'g' || ch == 'G' || ch == 'c' || ch == 'C') {
+					gc++;
+				} else if (ch == 'a' || ch == 'A' || ch == 't' || ch == 'T') {
+					at++;
+				}
+			}
+		}
+		return (0.0 + gc) / (at + gc);
 	}
 	
 	private static Map<String, String> featuresToProtMap(List<InnerFeature> features) {

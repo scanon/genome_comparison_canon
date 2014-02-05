@@ -169,7 +169,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 				Contig contig = contigMap.get(contigName);
 				if (contig == null) {
 					contig = new Contig().withId(contigName).withName(contigName).withMd5("md5")
-							.withSequence("").withLength((long)commonLen);
+							.withSequence("");
 					contigMap.put(contigName, contig);
 				}
 				contig.withSequence(contig.getSequence() + seqPart);
@@ -236,10 +236,11 @@ public class ContigSetUploadServlet extends HttpServlet {
 		});
 		WorkspaceClient wc = TaskHolder.createWsClient(token);
 		String contigId = id + ".contigset";
-		List<Long> contigLenths = new ArrayList<Long>();
+		List<Long> contigLengths = new ArrayList<Long>();
 		long dnaLen = 0;
 		for (Contig contig : contigMap.values()) {
-			contigLenths.add(contig.getLength());
+			contig.withLength((long)contig.getSequence().length());
+			contigLengths.add(contig.getLength());
 			dnaLen += contig.getLength();
 		}
 		ContigSet contigSet = new ContigSet().withContigs(new ArrayList<Contig>(contigMap.values()))
@@ -248,8 +249,9 @@ public class ContigSetUploadServlet extends HttpServlet {
 		wc.saveObjects(new SaveObjectsParams().withWorkspace(ws)
 				.withObjects(Arrays.asList(new ObjectSaveData().withName(contigId)
 						.withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
-		genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLenths)
-				.withDnaSize(dnaLen).withContigsetRef(ws + "/" + contigId).withFeatures(features);
+		genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
+				.withDnaSize(dnaLen).withContigsetRef(ws + "/" + contigId).withFeatures(features)
+				.withGcContent(TaskHolder.calculateGcContent(contigSet));
 		wc.saveObjects(new SaveObjectsParams().withWorkspace(ws)
 				.withObjects(Arrays.asList(new ObjectSaveData().withName(id)
 						.withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
