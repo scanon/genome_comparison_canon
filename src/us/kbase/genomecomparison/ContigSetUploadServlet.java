@@ -3,10 +3,12 @@ package us.kbase.genomecomparison;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -70,7 +72,8 @@ public class ContigSetUploadServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		int maxMemoryFileSize = 50 * 1024 * 1024;
-		DiskFileItemFactory factory = new DiskFileItemFactory(maxMemoryFileSize, getTempDir());
+		File dir = getTempDir();
+		DiskFileItemFactory factory = new DiskFileItemFactory(maxMemoryFileSize, dir);
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		FileItem file = null;
 		try {
@@ -135,6 +138,8 @@ public class ContigSetUploadServlet extends HttpServlet {
 			} else if (type.equals("genomegbk")) {
 				uploadGbk(file.getInputStream(), ws, id, token);
 				response.getOutputStream().write("Genome was successfuly uploaded".getBytes());
+			} else {
+				throw new ServletException("Unknown file type: " + type);
 			}
 		} catch (Throwable ex) {
 			ex.printStackTrace(new PrintStream(response.getOutputStream()));

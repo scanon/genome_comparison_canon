@@ -185,6 +185,7 @@ annotate_genome_params is a reference to a hash where the following keys are def
 	in_genome_id has a value which is a string
 	out_genome_ws has a value which is a string
 	out_genome_id has a value which is a string
+	seed_annotation_only has a value which is an int
 
 </pre>
 
@@ -199,6 +200,7 @@ annotate_genome_params is a reference to a hash where the following keys are def
 	in_genome_id has a value which is a string
 	out_genome_ws has a value which is a string
 	out_genome_id has a value which is a string
+	seed_annotation_only has a value which is an int
 
 
 =end text
@@ -492,6 +494,7 @@ string in_genome_ws - workspace of input genome
 string in_genome_id - id of input genome
 string out_genome_ws - workspace of output genome
 string out_genome_id - future id of output genome
+int seed_annotation_only - optional flag (default value is 0) preventing gene calling
 
 
 =item Definition
@@ -504,6 +507,7 @@ in_genome_ws has a value which is a string
 in_genome_id has a value which is a string
 out_genome_ws has a value which is a string
 out_genome_id has a value which is a string
+seed_annotation_only has a value which is an int
 
 </pre>
 
@@ -516,6 +520,7 @@ in_genome_ws has a value which is a string
 in_genome_id has a value which is a string
 out_genome_ws has a value which is a string
 out_genome_id has a value which is a string
+seed_annotation_only has a value which is an int
 
 
 =end text
