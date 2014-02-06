@@ -46,8 +46,8 @@ public class TaskHolder {
 	private final File tempDir;
 	private final File blastBin;
 	
-	//private static final String wsUrl = "https://kbase.us/services/workspace/";
-	private static final String wsUrl = "http://140.221.84.209:7058/";
+	private static final String wsUrl = "https://kbase.us/services/ws/";
+	//private static final String wsUrl = "http://140.221.84.209:7058/";
     //private static final String jobSrvUrl = "http://140.221.84.180:7083";
     private static final String jobSrvUrl = "https://kbase.us/services/userandjobstate/";
     private static final String gaUrl = "https://kbase.us/services/genome_annotation";
