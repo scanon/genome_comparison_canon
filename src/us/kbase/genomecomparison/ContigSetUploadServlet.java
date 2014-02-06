@@ -234,11 +234,17 @@ public class ContigSetUploadServlet extends HttpServlet {
 				features.add(f);
 			}
 		});
+		if (contigMap.size() == 0) {
+			throw new ServletException("GBK-file has no DNA-sequence");
+		}
 		WorkspaceClient wc = TaskHolder.createWsClient(token);
 		String contigId = id + ".contigset";
 		List<Long> contigLengths = new ArrayList<Long>();
 		long dnaLen = 0;
 		for (Contig contig : contigMap.values()) {
+			if (contig.getSequence() == null || contig.getSequence().length() == 0) {
+				throw new ServletException("Contig " + contig.getId() + " has no DNA-sequence");
+			}
 			contig.withLength((long)contig.getSequence().length());
 			contigLengths.add(contig.getLength());
 			dnaLen += contig.getLength();

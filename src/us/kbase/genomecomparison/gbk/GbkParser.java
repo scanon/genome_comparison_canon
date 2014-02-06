@@ -24,133 +24,138 @@ public class GbkParser {
 		GbkSubheader sub = null;
 		GbkFeature feat = null;
 		GbkQualifier qual = null;
-		for(int line_num=1;;line_num++) {
-			String line = br.readLine();
-			if(line==null) break;
-			if(line.trim().length()==0) continue;
-			if(state==-1) {   // Skipping current locus
-				if(line.startsWith("//")) state = 0;
-				continue;
-			}
-			else if(state==0) {
-				if(line.startsWith("FEATURES")) {
-					if(loc!=null) {
-						if(!loc.isClosed()) loc.closeHeaders();
-					}
-					state = 1;
+		int line_num = 1;
+		try {
+			for(;;line_num++) {
+				String line = br.readLine();
+				if(line==null) break;
+				if(line.trim().length()==0) continue;
+				if(state==-1) {   // Skipping current locus
+					if(line.startsWith("//")) state = 0;
 					continue;
 				}
-				String prefix = line.substring(0,HEADER_PREFIX_LENGTH);
-				line = line.substring(HEADER_PREFIX_LENGTH).trim();
-				if(prefix.trim().length()>0) {
-					if(prefix.startsWith("LOCUS")) {
-						StringTokenizer st = new StringTokenizer(line," \t");
-						if((loc!=null)&&(!loc.isClosed())) loc.close();
-						loc = new GbkLocus(line_num, st.nextToken(),ret);
-						head = null;
-						sub = null;
+				else if(state==0) {
+					if(line.startsWith("FEATURES")) {
+						if(loc!=null) {
+							if(!loc.isClosed()) loc.closeHeaders();
+						}
+						state = 1;
+						continue;
 					}
-					if(prefix.startsWith(" ")) {
-						sub = new GbkSubheader(line_num,prefix.trim(),line);
-						head.subheaders.add(sub);
-					}
-					else {
-						String type = prefix.trim();
-						head = new GbkHeader(line_num,type,line);
-						sub = null;
-						loc.addHeader(head);
-					}
-				}
-				else {
-					if(sub!=null) {
-						sub.appendValue(line);
-					}
-					else {
-						head.appendValue(line);
-					}
-				}
-			}
-			else if(state==1) {
-				if(line.startsWith("ORIGIN")) {
-					state = 2;
-					if(qual!=null) qual.close();
-					qual = null;
-					if(feat!=null) feat.close();
-					feat = null;
-					if(!loc.isClosed()) {
-						loc.close();
-					}
-					seq = new GbkSequence(loc, ret);
-					loc = null;
-					continue;
-				}
-				if(line.startsWith("BASE COUNT")) continue;
-				String prefix = line.substring(0,FEATURE_PREFIX_LENGTH).trim();
-				line = line.substring(FEATURE_PREFIX_LENGTH).trim();
-				if(prefix.length()>0) {
-					if(feat!=null) {
-						feat.close();
-					}
-					feat = new GbkFeature(line_num,prefix,line);
-					if(qual!=null) qual.close();
-					qual = null;
-					loc.addFeature(feat);
-				}
-				else {
-					if((line.startsWith("/"))&&(qual_tm.isType(line.substring(1)))) {
-						line += "=";
-					}
-					int slash_pos = line.indexOf("/");
-					int equal_pos = line.indexOf("=");
-					String qual_name = null;
-					if((slash_pos==0)&&(1<equal_pos)) {
-						qual_name = line.substring(slash_pos+1,equal_pos).trim();
-						if(qual_name.length()==0) {
-							qual_name = null;
+					String prefix = line.substring(0,HEADER_PREFIX_LENGTH);
+					line = line.substring(HEADER_PREFIX_LENGTH).trim();
+					if(prefix.trim().length()>0) {
+						if(prefix.startsWith("LOCUS")) {
+							StringTokenizer st = new StringTokenizer(line," \t");
+							if((loc!=null)&&(!loc.isClosed())) loc.close();
+							loc = new GbkLocus(line_num, st.nextToken(),ret);
+							head = null;
+							sub = null;
+						}
+						if(prefix.startsWith(" ")) {
+							sub = new GbkSubheader(line_num,prefix.trim(),line);
+							head.subheaders.add(sub);
 						}
 						else {
-							for(int i=0;i<qual_name.length();i++) {
-								char ch = qual_name.charAt(i);
-								if((!Character.isLetterOrDigit(ch))&&
-										(ch!='_')) {
-									qual_name = null;
-									break;
+							String type = prefix.trim();
+							head = new GbkHeader(line_num,type,line);
+							sub = null;
+							loc.addHeader(head);
+						}
+					}
+					else {
+						if(sub!=null) {
+							sub.appendValue(line);
+						}
+						else {
+							head.appendValue(line);
+						}
+					}
+				}
+				else if(state==1) {
+					if(line.startsWith("ORIGIN") || line.startsWith("CONTIG ")) {
+						state = 2;
+						if(qual!=null) qual.close();
+						qual = null;
+						if(feat!=null) feat.close();
+						feat = null;
+						if(!loc.isClosed()) {
+							loc.close();
+						}
+						seq = new GbkSequence(loc, ret);
+						loc = null;
+						continue;
+					}
+					if(line.startsWith("BASE COUNT")) continue;
+					String prefix = line.substring(0,FEATURE_PREFIX_LENGTH).trim();
+					line = line.substring(FEATURE_PREFIX_LENGTH).trim();
+					if(prefix.length()>0) {
+						if(feat!=null) {
+							feat.close();
+						}
+						feat = new GbkFeature(line_num,prefix,line);
+						if(qual!=null) qual.close();
+						qual = null;
+						loc.addFeature(feat);
+					}
+					else {
+						if((line.startsWith("/"))&&(qual_tm.isType(line.substring(1)))) {
+							line += "=";
+						}
+						int slash_pos = line.indexOf("/");
+						int equal_pos = line.indexOf("=");
+						String qual_name = null;
+						if((slash_pos==0)&&(1<equal_pos)) {
+							qual_name = line.substring(slash_pos+1,equal_pos).trim();
+							if(qual_name.length()==0) {
+								qual_name = null;
+							}
+							else {
+								for(int i=0;i<qual_name.length();i++) {
+									char ch = qual_name.charAt(i);
+									if((!Character.isLetterOrDigit(ch))&&
+											(ch!='_')) {
+										qual_name = null;
+										break;
+									}
 								}
 							}
 						}
-					}
-					if(qual_name!=null) {
-						line = line.substring(equal_pos+1).trim();
-						if(qual!=null) qual.close();
-						qual = new GbkQualifier(line_num,qual_name,line);
-						feat.qualifiers.add(qual);
-					}
-					else {
-						if(qual!=null) {
-							if(qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
-								qual.appendValueWithoutSpace(line);
-							}
-							else {
-								qual.appendValue(line);
-							}
+						if(qual_name!=null) {
+							line = line.substring(equal_pos+1).trim();
+							if(qual!=null) qual.close();
+							qual = new GbkQualifier(line_num,qual_name,line);
+							feat.qualifiers.add(qual);
 						}
-						else feat.appendValue(line);
+						else {
+							if(qual!=null) {
+								if(qual.type.equals(QUALIFIER_DB_XREF_TYPE) || qual.type.equals(QUALIFIER_TRANSLATION_TYPE)) {
+									qual.appendValueWithoutSpace(line);
+								}
+								else {
+									qual.appendValue(line);
+								}
+							}
+							else feat.appendValue(line);
+						}
+					}
+				}
+				else if(state==2) {
+					if(line.startsWith("//")) {
+						seq.close();
+						seq = null;
+						state = 0;
+						continue;
+					}
+					StringTokenizer st = new StringTokenizer(line," \t");
+					st.nextToken();
+					while(st.hasMoreTokens()) {
+						seq.append(st.nextToken());
 					}
 				}
 			}
-			else if(state==2) {
-				if(line.startsWith("//")) {
-					seq.close();
-					seq = null;
-					state = 0;
-					continue;
-				}
-				StringTokenizer st = new StringTokenizer(line," \t");
-				st.nextToken();
-				while(st.hasMoreTokens()) {
-					seq.append(st.nextToken());
-				}
-			}
+		} catch (Throwable t) {
+			throw new IllegalStateException("Error parsing GBK-file at line " + line_num + " (" + t.getMessage() + ")", t);
 		}
 		if((loc!=null)&&(loc.isClosed())) loc.close();
 		if(seq!=null) seq.close();				
@@ -158,7 +163,7 @@ public class GbkParser {
 
     public static void main(String[] args) throws Exception {
     	final PrintWriter pw = new PrintWriter("test/parse.txt");
-        BufferedReader br = new BufferedReader(new FileReader(new File("test/NC_008577.gbk")));
+        BufferedReader br = new BufferedReader(new FileReader(new File("test/Pseudomonas_stutzeri_DSM_10701.gb")));
         parse(br, new GbkCallback() {
             @Override
             public void setGenome(String genomeName, int taxId) throws Exception {
