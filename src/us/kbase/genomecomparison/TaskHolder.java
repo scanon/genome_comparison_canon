@@ -78,6 +78,7 @@ public class TaskHolder {
 		Task task = new Task(jobId, params, authToken, outRef);
 		taskQueue.addLast(task);
 		taskMap.put(task.getJobId(), task);
+		Stat.addQueued(tempDir);
 		synchronized (idleMonitor) {
 			idleMonitor.notify();
 		}
@@ -103,6 +104,7 @@ public class TaskHolder {
 	private void runTask(Task task) {
 		String token = task.getAuthToken();
 		try {
+			Stat.queuedToRunning(tempDir);
 			changeTaskStateIntoRunning(task, token);
 			Object params = task.getParams();
 			if (params instanceof BlastProteomesParams) {
@@ -129,6 +131,8 @@ public class TaskHolder {
 			} catch (Exception ex) {
 				ex.printStackTrace();
 			}
+		} finally {
+			Stat.endRunning(tempDir);
 		}
 	}
 
@@ -290,7 +294,13 @@ public class TaskHolder {
 		genome.setFeatures(featuresToSave);
 		if (genome.getGcContent() == null)
 			genome.setGcContent(calculateGcContent(contigSet));
-		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType("KBaseGenomes.Genome");
+		Map<String, String> meta = genomeData.getInfo().getE11();
+		if (meta == null)
+			meta = new LinkedHashMap<String, String>();
+		if (!meta.containsKey("Scientific name")) {
+			meta.put("Scientific name", genome.getScientificName());
+		}
+		ObjectSaveData data = new ObjectSaveData().withData(new UObject(genome)).withType("KBaseGenomes.Genome").withMeta(meta);
 		try {
 			long objid = Long.parseLong(params.getOutGenomeId());
 			data.withObjid(objid);

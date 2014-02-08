@@ -77,6 +77,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 		ServletFileUpload upload = new ServletFileUpload(factory);
 		FileItem file = null;
 		try {
+			Stat.addUploader(dir);
 			String token = null;
 			String ws = null;
 			String id = null;
@@ -144,6 +145,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 		} catch (Throwable ex) {
 			ex.printStackTrace(new PrintStream(response.getOutputStream()));
 		} finally {
+			Stat.delUploader(dir);
 			if (file != null)
 				file.delete();
 		}
@@ -258,10 +260,11 @@ public class ContigSetUploadServlet extends HttpServlet {
 		genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
 				.withDnaSize(dnaLen).withContigsetRef(ws + "/" + contigId).withFeatures(features)
 				.withGcContent(TaskHolder.calculateGcContent(contigSet));
+		Map<String, String> meta = new LinkedHashMap<String, String>();
+		meta.put("Scientific name", genome.getScientificName());
 		wc.saveObjects(new SaveObjectsParams().withWorkspace(ws)
-				.withObjects(Arrays.asList(new ObjectSaveData().withName(id)
+				.withObjects(Arrays.asList(new ObjectSaveData().withName(id).withMeta(meta)
 						.withType("KBaseGenomes.Genome").withData(new UObject(genome)))));
-
 	}
 	
 	private static void check(Object obj, String param) throws ServletException {
