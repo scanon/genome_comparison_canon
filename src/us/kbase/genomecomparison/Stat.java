@@ -37,10 +37,18 @@ public class Stat {
 	}
 
 	private static synchronized void flush(File dir) {
+		print(dir, "queued=" + queuedTasks + ", running=" + runningTasks + ", " +
+					"uploaders=" + uploaders);
+	}
+	
+	public static synchronized void showMem(File dir) {
+		print(dir, "max.memory=" + Runtime.getRuntime().maxMemory());
+	}
+	
+	private static synchronized void print(File dir, String text) {
 		try {
 			PrintWriter pw = new PrintWriter(new FileWriter(new File(dir, "stat.log"), true));
-			pw.println("" + new Date() + ": queued=" + queuedTasks + ", running=" + runningTasks + ", " +
-					"uploaders=" + uploaders);
+			pw.println("" + new Date() + ": " + text);
 			pw.close();
 		} catch (Throwable t) {}
 	}

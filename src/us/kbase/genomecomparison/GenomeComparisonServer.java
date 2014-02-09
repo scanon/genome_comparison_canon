@@ -24,6 +24,7 @@ public class GenomeComparisonServer extends JsonServerServlet {
     //BEGIN_CLASS_HEADER
     private String configPath = null;
     private TaskHolder taskHolder = null;
+    private static boolean wasStart = false;
     
     public void init(ServletConfig servletConfig) throws ServletException {
         configPath = servletConfig.getInitParameter("config_file");
@@ -52,6 +53,9 @@ public class GenomeComparisonServer extends JsonServerServlet {
     			System.out.println("Configuration file was not set");
     		}
 			taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
+			if (!wasStart)
+				Stat.showMem(tempDir);
+			wasStart = true;
     	}
     	return taskHolder;
     }
