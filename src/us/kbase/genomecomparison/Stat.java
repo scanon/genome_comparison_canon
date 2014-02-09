@@ -37,12 +37,11 @@ public class Stat {
 	}
 
 	private static synchronized void flush(File dir) {
+		long max = Runtime.getRuntime().maxMemory();
+		long tot = Runtime.getRuntime().totalMemory();
+		long free = Runtime.getRuntime().freeMemory();
 		print(dir, "queued=" + queuedTasks + ", running=" + runningTasks + ", " +
-					"uploaders=" + uploaders);
-	}
-	
-	public static synchronized void showMem(File dir) {
-		print(dir, "max.memory=" + Runtime.getRuntime().maxMemory());
+					"uploaders=" + uploaders + ", mem(max/total/free)=" + max + "/" + tot + "/" + free);
 	}
 	
 	private static synchronized void print(File dir, String text) {
