@@ -16,7 +16,7 @@ deploy: distrib
 deploy-all: distrib
 
 test:
-	@echo "no tests"
+	./run_tests.sh $(LIB_JARS_DIR)
 
 compile: src
 	./make_war.sh $(SERVICE_DIR) $(LIB_JARS_DIR)

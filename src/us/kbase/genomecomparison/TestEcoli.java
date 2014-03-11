@@ -1,7 +1,6 @@
 package us.kbase.genomecomparison;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -56,7 +55,7 @@ public class TestEcoli {
 				.withOutputWs(ws).withOutputId(outId));
 		long time = System.currentTimeMillis();
 		while (true) {
-			Tuple7<String, String, String, Long, String, Long, Long> data = TaskHolder.createJobClient(token).getJobStatus(jobId);
+			Tuple7<String, String, String, Long, String, Long, Long> data = new GenomeCmpConfig().createJobClient(token).getJobStatus(jobId);
 			String status = data.getE3();
     		Long complete = data.getE6();
     		Long wasError = data.getE7();
@@ -77,10 +76,11 @@ public class TestEcoli {
 		String genomeId = "Shewanella_ANA_3.genome";
 		long time = System.currentTimeMillis();
 		try {
-			new TaskHolder(1, new File("temp"), null).runAnnotateGenome(token, 
+			GenomeCmpConfig cfg = new GenomeCmpConfig(1, new File("tmp"), null, null, null);
+			AnnotateGenome.run(token, 
 					new AnnotateGenomeParams().withInGenomeWs(ws).withInGenomeId(genomeId)
-					.withOutGenomeWs(ws).withOutGenomeId(genomeId).withSeedAnnotationOnly(1L));
-			ObjectData genomeData = TaskHolder.createWsClient(token).getObjects(Arrays.asList(
+					.withOutGenomeWs(ws).withOutGenomeId(genomeId).withSeedAnnotationOnly(1L), cfg);
+			ObjectData genomeData = new GenomeCmpConfig().createWsClient(token).getObjects(Arrays.asList(
 					new ObjectIdentity().withRef(ws + "/" + genomeId))).get(0);
 			Genome genome = genomeData.getData().asClassInstance(Genome.class);
 			System.out.println(genome.getFeatures().subList(0, 300));
@@ -133,7 +133,7 @@ public class TestEcoli {
 	
 	private static void uploadSpec() throws Exception {
 		String token = AuthService.login("rsutormin", "").getToken().toString();  //getAuthToken();
-		WorkspaceClient wc = TaskHolder.createWsClient(token);
+		WorkspaceClient wc = new GenomeCmpConfig().createWsClient(token);
 		//wc.registerTypespec(new RegisterTypespecParams().withSpec(spec))
 		//wc.releaseModule("GenomeComparison");
 		System.out.println(wc.getModuleInfo(new GetModuleInfoParams().withMod("GenomeComparison")));

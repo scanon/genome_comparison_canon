@@ -3,12 +3,10 @@ package us.kbase.genomecomparison;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -127,7 +125,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 				}
 				ContigSet contigSet = new ContigSet().withContigs(contigList).withId(id).withMd5("md5").withName(id)
 						.withSource("User uploaded data").withSourceId("USER").withType("Organism");
-				WorkspaceClient wc = TaskHolder.createWsClient(token);
+				WorkspaceClient wc = new GenomeCmpConfig().createWsClient(token);
 				ObjectSaveData data = new ObjectSaveData().withName(id).withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet));
 				try {
 					data.withObjid(Long.parseLong(id));
@@ -239,7 +237,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 		if (contigMap.size() == 0) {
 			throw new ServletException("GBK-file has no DNA-sequence");
 		}
-		WorkspaceClient wc = TaskHolder.createWsClient(token);
+		WorkspaceClient wc = new GenomeCmpConfig().createWsClient(token);
 		String contigId = id + ".contigset";
 		List<Long> contigLengths = new ArrayList<Long>();
 		long dnaLen = 0;
@@ -259,7 +257,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 						.withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet)))));
 		genome.withContigIds(new ArrayList<String>(contigMap.keySet())).withContigLengths(contigLengths)
 				.withDnaSize(dnaLen).withContigsetRef(ws + "/" + contigId).withFeatures(features)
-				.withGcContent(TaskHolder.calculateGcContent(contigSet));
+				.withGcContent(AnnotateGenome.calculateGcContent(contigSet));
 		Map<String, String> meta = new LinkedHashMap<String, String>();
 		meta.put("Scientific name", genome.getScientificName());
 		wc.saveObjects(new SaveObjectsParams().withWorkspace(ws)

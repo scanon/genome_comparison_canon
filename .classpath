@@ -18,5 +18,7 @@
 	<classpathentry kind="lib" path="../jars/lib/jars/google/jsonschema2pojo-core-0.3.6.jar"/>
 	<classpathentry kind="lib" path="../jars/lib/jars/apache_commons/commons-lang-2.4.jar"/>
 	<classpathentry kind="lib" path="/Users/rsutormin/Programs/eclipse/workspace/jars/lib/jars/apache_commons/commons-fileupload-1.2.2.jar"/>
+	<classpathentry kind="lib" path="/Users/rsutormin/Programs/eclipse/workspace/jars/lib/jars/derby/derby-10.10.1.1.jar"/>
+	<classpathentry kind="lib" path="/Users/rsutormin/Programs/eclipse/workspace/jars/lib/jars/easymock/easymock-3.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

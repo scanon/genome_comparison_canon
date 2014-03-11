@@ -65,7 +65,7 @@ public class ComparisonImage extends HttpServlet {
 
 	public static ProteomeComparison loadCmpObject(String ws, String id, String token)
 			throws IOException, JsonClientException, Exception {
-		UObject cmpObj = TaskHolder.createWsClient(token).getObjects(
+		UObject cmpObj = new GenomeCmpConfig().createWsClient(token).getObjects(
 				Arrays.asList(new ObjectIdentity().withRef(ws + "/" + id))).get(0).getData();
 		return cmpObj.asClassInstance(ProteomeComparison.class);
 	}
