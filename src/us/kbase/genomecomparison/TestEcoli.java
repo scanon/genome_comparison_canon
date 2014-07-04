@@ -41,7 +41,7 @@ public class TestEcoli {
 	}
 	
 	private static String getAuthToken() throws Exception {
-		return AuthService.login("nardevuser1", "nardevuser2").getToken().toString();
+		return AuthService.login("nardevuser1", "*****").getToken().toString();
 	}
 	
 	public static void runBlast(String genome1name, String genome2name) throws Exception {
