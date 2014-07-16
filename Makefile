@@ -5,7 +5,7 @@ TARGET ?= /kb/deployment
 CURR_DIR = $(shell pwd)
 SERVICE_NAME = $(shell basename $(CURR_DIR))
 SERVICE_DIR = $(TARGET)/services/$(SERVICE_NAME)
-LIB_JARS_DIR = $(TARGET)/lib/jars
+LIB_JARS_DIR = $(KB_TOP)/modules/jars/lib/jars
 TARGET_PORT = 8283
 THREADPOOL_SIZE = 5
 
