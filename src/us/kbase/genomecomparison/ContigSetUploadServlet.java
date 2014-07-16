@@ -13,9 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -47,23 +45,11 @@ import us.kbase.workspace.WorkspaceClient;
 public class ContigSetUploadServlet extends HttpServlet {
 	private static final long serialVersionUID = -1L;
 	
-    private String configPath = null;
-    
-    public void init(ServletConfig servletConfig) throws ServletException {
-        configPath = servletConfig.getInitParameter("config_file");
-    }
+    private File tempDir = null;
 
     private File getTempDir() throws IOException {
-		File tempDir = new File(".");
-		if (configPath != null) {
-			File f = new File(configPath);
-			if (f.exists()) {
-				Properties props = new Properties();
-				props.load(new FileInputStream(f));
-				if (props.containsKey("temp.dir"))
-					tempDir = new File(props.getProperty("temp.dir"));
-			}
-		}
+		if (tempDir == null)
+			tempDir = GenomeCmpConfig.loadConfig().getTempDir();
 		return tempDir;
     }
     

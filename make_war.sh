@@ -54,6 +54,10 @@ cat > $WEB_INF_DIR/web.xml <<EOF
         <servlet-name>ContigSetUploadServlet</servlet-name>
         <servlet-class>us.kbase.genomecomparison.ContigSetUploadServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>GOUserListServlet</servlet-name>
+        <servlet-class>us.kbase.genomecomparison.GOUserListServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>JsonRpcServlet</servlet-name>
         <url-pattern>/jsonrpc</url-pattern>
@@ -65,6 +69,10 @@ cat > $WEB_INF_DIR/web.xml <<EOF
     <servlet-mapping>
         <servlet-name>ContigSetUploadServlet</servlet-name>
         <url-pattern>/uploader</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>GOUserListServlet</servlet-name>
+        <url-pattern>/users</url-pattern>
     </servlet-mapping>
 </web-app>
 EOF
