@@ -27,7 +27,7 @@ public class GenomeCmpConfig {
 	private JobStatuses jobStatuses;
 
 	private String wsUrl = "http://dev04.berkeley.kbase.us:7058";  // "https://kbase.us/services/ws/";
-    private String jobSrvUrl = "https://kbase.us/services/UserAndJobState/";
+    private String jobSrvUrl = "https://kbase.us/services/userandjobstate/";
 
 	public GenomeCmpConfig() {
 		this(1, null, null, null, null);
