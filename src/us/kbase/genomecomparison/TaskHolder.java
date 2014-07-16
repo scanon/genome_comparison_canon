@@ -33,10 +33,6 @@ public class TaskHolder {
     public static final String DERBY_DB_NAME = "GenomeCmpDb";
     public static final String QUEUE_TABLE_NAME = "task_queue";
 	
-	public TaskHolder(int threadCount, File tempDir, File blastBin) throws ClassNotFoundException, SQLException {
-		this(new GenomeCmpConfig(threadCount, tempDir, blastBin, null, null));
-	}
-	
 	public TaskHolder(GenomeCmpConfig config) throws ClassNotFoundException, SQLException {
 		this.config = config;
 		conn = getDbConnection(config.getTempDir());
@@ -44,7 +40,7 @@ public class TaskHolder {
 			conn.exec("create table " + QUEUE_TABLE_NAME + " (" +
 					"jobid varchar(100) primary key," +
 					"type varchar(100)," +
-					"params varchar(1000)," +
+					"params varchar(10000)," +
 					"auth varchar(1000)," +
 					"outref varchar(1000)" +
 					")");

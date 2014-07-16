@@ -82,7 +82,7 @@ public class TaskHolderTest extends EasyMockSupport {
 		    }
 		});
 		replayAll();
-		th[0] = new TaskHolder(new GenomeCmpConfig(1, tmpDir, null, obst, jbst));
+		th[0] = new TaskHolder(new GenomeCmpConfig(1, tmpDir, null, null, null, obst, jbst));
 		Assert.assertEquals(jobId, th[0].addTaskForTest(new TestTask("something-saved", null), token));
 		while (!complete[0]) {
 			Thread.sleep(100);
@@ -128,7 +128,7 @@ public class TaskHolderTest extends EasyMockSupport {
 		    }
 		});
 		replayAll();
-		th[0] = new TaskHolder(new GenomeCmpConfig(1, tmpDir, null, obst, jbst));
+		th[0] = new TaskHolder(new GenomeCmpConfig(1, tmpDir, null, null, null, obst, jbst));
 		Assert.assertEquals(jobId, th[0].addTaskForTest(new TestTask("something-saved", new Runnable() {
 			@Override
 			public void run() {

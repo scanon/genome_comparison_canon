@@ -9,11 +9,14 @@ then
 cp -r ./blast $1
 fi
 mkdir $1/temp
-if [ ! -f $1/config.props ]
+if [ ! -f $1/deploy.cfg ]
 then
-cat > $1/config.props <<EOF
+cat > $1/deploy.cfg <<EOF
+[genome_comparison]
 thread.count=$2
 temp.dir=$1/temp
-blast.dir=$1/blast/linux    #PATH is used when this parameter is not defined
+blast.dir=$1/blast/linux
+#ws.url=url_to_workspace_service
+#ujs.url=url_to_user_job_status_service
 EOF
 fi

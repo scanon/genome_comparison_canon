@@ -6,7 +6,7 @@ then
     exit
 fi
 
-CONFIG_FILE=$1/config.props
+CONFIG_FILE=$1/deploy.cfg
 DATE=$(date +"%Y%m%d%H%M")
 WAR_DIR=./war_$DATE
 WEB_INF_DIR=$WAR_DIR/WEB-INF
@@ -35,16 +35,16 @@ do
     cp $x $LIB_DIR/
 done
 
+cat > $CLASSES_DIR/us/kbase/genomecomparison/config_path.properties <<EOF
+config_path=$CONFIG_FILE
+EOF
+
 cat > $WEB_INF_DIR/web.xml <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app>
     <servlet>
         <servlet-name>JsonRpcServlet</servlet-name>
         <servlet-class>us.kbase.genomecomparison.GenomeComparisonServer</servlet-class>
-        <init-param>
-            <param-name>config_file</param-name> 
-            <param-value>$CONFIG_FILE</param-value> 
-        </init-param>
     </servlet>
     <servlet>
         <servlet-name>ImageServlet</servlet-name>
@@ -53,10 +53,6 @@ cat > $WEB_INF_DIR/web.xml <<EOF
     <servlet>
         <servlet-name>ContigSetUploadServlet</servlet-name>
         <servlet-class>us.kbase.genomecomparison.ContigSetUploadServlet</servlet-class>
-        <init-param>
-            <param-name>config_file</param-name> 
-            <param-value>$CONFIG_FILE</param-value> 
-        </init-param>
     </servlet>
     <servlet-mapping>
         <servlet-name>JsonRpcServlet</servlet-name>

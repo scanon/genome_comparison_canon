@@ -8,6 +8,7 @@ import us.kbase.auth.AuthService;
 import us.kbase.auth.AuthToken;
 import us.kbase.common.service.Tuple7;
 import us.kbase.kbasegenomes.Genome;
+import us.kbase.userandjobstate.UserAndJobStateClient;
 import us.kbase.workspace.GetModuleInfoParams;
 import us.kbase.workspace.ObjectData;
 import us.kbase.workspace.ObjectIdentity;
@@ -55,7 +56,8 @@ public class TestEcoli {
 				.withOutputWs(ws).withOutputId(outId));
 		long time = System.currentTimeMillis();
 		while (true) {
-			Tuple7<String, String, String, Long, String, Long, Long> data = new GenomeCmpConfig().createJobClient(token).getJobStatus(jobId);
+			UserAndJobStateClient ujs = GenomeCmpConfig.createJobClient(token);
+			Tuple7<String, String, String, Long, String, Long, Long> data = ujs.getJobStatus(jobId);
 			String status = data.getE3();
     		Long complete = data.getE6();
     		Long wasError = data.getE7();
@@ -80,7 +82,7 @@ public class TestEcoli {
 			AnnotateGenome.run(token, 
 					new AnnotateGenomeParams().withInGenomeWs(ws).withInGenomeId(genomeId)
 					.withOutGenomeWs(ws).withOutGenomeId(genomeId).withSeedAnnotationOnly(1L), cfg);
-			ObjectData genomeData = new GenomeCmpConfig().createWsClient(token).getObjects(Arrays.asList(
+			ObjectData genomeData = GenomeCmpConfig.createWsClient(token).getObjects(Arrays.asList(
 					new ObjectIdentity().withRef(ws + "/" + genomeId))).get(0);
 			Genome genome = genomeData.getData().asClassInstance(Genome.class);
 			System.out.println(genome.getFeatures().subList(0, 300));
@@ -133,7 +135,7 @@ public class TestEcoli {
 	
 	private static void uploadSpec() throws Exception {
 		String token = AuthService.login("rsutormin", "").getToken().toString();  //getAuthToken();
-		WorkspaceClient wc = new GenomeCmpConfig().createWsClient(token);
+		WorkspaceClient wc = GenomeCmpConfig.createWsClient(token);
 		//wc.registerTypespec(new RegisterTypespecParams().withSpec(spec))
 		//wc.releaseModule("GenomeComparison");
 		System.out.println(wc.getModuleInfo(new GetModuleInfoParams().withMod("GenomeComparison")));

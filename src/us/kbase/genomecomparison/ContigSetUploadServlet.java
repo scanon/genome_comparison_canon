@@ -125,7 +125,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 				}
 				ContigSet contigSet = new ContigSet().withContigs(contigList).withId(id).withMd5("md5").withName(id)
 						.withSource("User uploaded data").withSourceId("USER").withType("Organism");
-				WorkspaceClient wc = new GenomeCmpConfig().createWsClient(token);
+				WorkspaceClient wc = GenomeCmpConfig.createWsClient(token);
 				ObjectSaveData data = new ObjectSaveData().withName(id).withType("KBaseGenomes.ContigSet").withData(new UObject(contigSet));
 				try {
 					data.withObjid(Long.parseLong(id));
@@ -237,7 +237,7 @@ public class ContigSetUploadServlet extends HttpServlet {
 		if (contigMap.size() == 0) {
 			throw new ServletException("GBK-file has no DNA-sequence");
 		}
-		WorkspaceClient wc = new GenomeCmpConfig().createWsClient(token);
+		WorkspaceClient wc = GenomeCmpConfig.createWsClient(token);
 		String contigId = id + ".contigset";
 		List<Long> contigLengths = new ArrayList<Long>();
 		long dnaLen = 0;

@@ -7,11 +7,14 @@ import us.kbase.common.service.JsonServerServlet;
 //BEGIN_HEADER
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 //END_HEADER
+
+import org.ini4j.Ini;
 
 /**
  * <p>Original spec-file module name: GenomeComparison</p>
@@ -22,36 +25,14 @@ public class GenomeComparisonServer extends JsonServerServlet {
     private static final long serialVersionUID = 1L;
 
     //BEGIN_CLASS_HEADER
-    private String configPath = null;
     private TaskHolder taskHolder = null;
-    
+
     public void init(ServletConfig servletConfig) throws ServletException {
-        configPath = servletConfig.getInitParameter("config_file");
     }
     
     private TaskHolder getTaskHolder() throws Exception {
     	if (taskHolder == null) {
-    		int threadCount = 1;
-    		File tempDir = new File(".");
-    		File blastBin = null;
-    		if (configPath != null) {
-    			File f = new File(configPath);
-    			if (f.exists()) {
-    				Properties props = new Properties();
-    				props.load(new FileInputStream(f));
-    				if (props.containsKey("thread.count"))
-    					threadCount = Integer.parseInt(props.getProperty("thread.count"));
-    				if (props.containsKey("temp.dir"))
-    					tempDir = new File(props.getProperty("temp.dir"));
-    				if (props.containsKey("blast.dir"))
-    					blastBin = new File(props.getProperty("blast.dir"));
-        		} else {
-        			System.out.println("Configuration file [" + new File(configPath).getAbsolutePath() + "] doesn't exist");
-    			}
-    		} else {
-    			System.out.println("Configuration file was not set");
-    		}
-			taskHolder = new TaskHolder(threadCount, tempDir, blastBin);
+			taskHolder = new TaskHolder(GenomeCmpConfig.loadConfig());
     	}
     	return taskHolder;
     }
