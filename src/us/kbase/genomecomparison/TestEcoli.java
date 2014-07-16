@@ -1,6 +1,8 @@
 package us.kbase.genomecomparison;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.net.URL;
 import java.util.Arrays;
 
@@ -12,6 +14,7 @@ import us.kbase.userandjobstate.UserAndJobStateClient;
 import us.kbase.workspace.GetModuleInfoParams;
 import us.kbase.workspace.ObjectData;
 import us.kbase.workspace.ObjectIdentity;
+import us.kbase.workspace.RegisterTypespecParams;
 import us.kbase.workspace.WorkspaceClient;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +38,8 @@ public class TestEcoli {
 		//runBlast("Shewanella_ANA_3_uid58347", "Shewanella_baltica_BA175_uid52601");
 		//createImage("proteome_cmp_0_2");
 		//uploadGenome(genomeNames[6]);
-		//uploadSpec();
-		annotate();
+		uploadSpec();
+		//annotate();
 		/*ContigSetUploadServlet.uploadGbk(new FileInputStream(new File("test/NC_008577.gbk")), 
 				"nardevuser1:home", "Shewanella_ANA_3.genome", getAuthToken());*/
 	}
@@ -135,9 +138,21 @@ public class TestEcoli {
 	
 	private static void uploadSpec() throws Exception {
 		String token = AuthService.login("rsutormin", "").getToken().toString();  //getAuthToken();
-		WorkspaceClient wc = GenomeCmpConfig.createWsClient(token);
-		//wc.registerTypespec(new RegisterTypespecParams().withSpec(spec))
-		//wc.releaseModule("GenomeComparison");
+		String wsUrl = "https://kbase.us/services/ws/";  //"http://dev04.berkeley.kbase.us:7058";
+		WorkspaceClient wc = GenomeCmpConfig.createWsClient(token, wsUrl);
+		StringBuilder sb = new StringBuilder();
+		BufferedReader br = new BufferedReader(new FileReader(new File("GenomeComparison.spec")));
+		while (true) {
+			String l = br.readLine();
+			if (l == null)
+				break;
+			sb.append(l).append("\n");
+		}
+		br.close();
+		String spec = sb.toString();
+		wc.registerTypespec(new RegisterTypespecParams().withSpec(spec).withNewTypes(
+				Arrays.<String>asList("ProteomeComparison")).withDryrun(0L));
+		wc.releaseModule("GenomeComparison");
 		System.out.println(wc.getModuleInfo(new GetModuleInfoParams().withMod("GenomeComparison")));
 	}
 }

@@ -14,8 +14,6 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 //END_HEADER
 
-import org.ini4j.Ini;
-
 /**
  * <p>Original spec-file module name: GenomeComparison</p>
  * <pre>
