@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.imageio.ImageIO;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -42,6 +43,23 @@ public class ComparisonImage extends HttpServlet {
 		jettyServer.join();
 	}
 	
+	@Override
+	protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		setupResponseHeaders(request, response);
+		response.setContentLength(0);
+		response.getOutputStream().print("");
+		response.getOutputStream().flush();
+	}
+
+	private static void setupResponseHeaders(HttpServletRequest request,
+			HttpServletResponse response) {
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		String allowedHeaders = request.getHeader("HTTP_ACCESS_CONTROL_REQUEST_HEADERS");
+		response.setHeader("Access-Control-Allow-Headers", allowedHeaders == null ? "authorization" : allowedHeaders);
+	}
+
+	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response)  
             throws IOException { 
 		String ws = request.getParameter("ws");
@@ -57,6 +75,7 @@ public class ComparisonImage extends HttpServlet {
 		} catch (Exception e) {
 			throw new IllegalStateException(e);
 		}
+		setupResponseHeaders(request, response);
 		response.setContentType("image/png");
 		OutputStream out = response.getOutputStream();
 		BufferedImage img = draw(cmp, x, y, w, w, sp);

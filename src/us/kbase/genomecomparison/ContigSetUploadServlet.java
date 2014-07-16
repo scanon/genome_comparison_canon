@@ -54,6 +54,22 @@ public class ContigSetUploadServlet extends HttpServlet {
     }
     
 	@Override
+	protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
+		setupResponseHeaders(request, response);
+		response.setContentLength(0);
+		response.getOutputStream().print("");
+		response.getOutputStream().flush();
+	}
+
+	private static void setupResponseHeaders(HttpServletRequest request,
+			HttpServletResponse response) {
+		response.setHeader("Access-Control-Allow-Origin", "*");
+		String allowedHeaders = request.getHeader("HTTP_ACCESS_CONTROL_REQUEST_HEADERS");
+		response.setHeader("Access-Control-Allow-Headers", allowedHeaders == null ? "authorization" : allowedHeaders);
+	}
+
+	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		int maxMemoryFileSize = 50 * 1024 * 1024;
 		File dir = getTempDir();
@@ -122,11 +138,13 @@ public class ContigSetUploadServlet extends HttpServlet {
 				response.getOutputStream().write("Contig Set was successfuly uploaded".getBytes());
 			} else if (type.equals("genomegbk")) {
 				uploadGbk(file.getInputStream(), ws, id, token);
+				setupResponseHeaders(request, response);
 				response.getOutputStream().write("Genome was successfuly uploaded".getBytes());
 			} else {
 				throw new ServletException("Unknown file type: " + type);
 			}
 		} catch (Throwable ex) {
+			setupResponseHeaders(request, response);
 			ex.printStackTrace(new PrintStream(response.getOutputStream()));
 		} finally {
 			Stat.delUploader(dir);
