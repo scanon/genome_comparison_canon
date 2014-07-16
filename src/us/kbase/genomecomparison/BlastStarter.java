@@ -61,7 +61,6 @@ public class BlastStarter {
 		ByteArrayOutputStream err_baos = null;
 		Exception err = null;
 		String binPath = blastBin == null ? "" : (blastBin.getAbsolutePath() + "/");
-		System.out.println("BlastStarter: binPath=" + binPath);
 		try {
 			Process p = Runtime.getRuntime().exec(CorrectProcess.arr(binPath + "makeblastdb", 
 					"-dbtype", "prot", "-in", databaseFile.getAbsolutePath()));

@@ -34,7 +34,6 @@ public class GenomeComparisonServer extends JsonServerServlet {
     		int threadCount = 1;
     		File tempDir = new File(".");
     		File blastBin = null;
-    		System.out.println("GenomeComparisonServer: configPath=" + configPath);
     		if (configPath != null) {
     			File f = new File(configPath);
     			if (f.exists()) {
@@ -44,8 +43,8 @@ public class GenomeComparisonServer extends JsonServerServlet {
     					threadCount = Integer.parseInt(props.getProperty("thread.count"));
     				if (props.containsKey("temp.dir"))
     					tempDir = new File(props.getProperty("temp.dir"));
-    				if (props.containsKey("blast.bin"))
-    					blastBin = new File(props.getProperty("blast.bin"));
+    				if (props.containsKey("blast.dir"))
+    					blastBin = new File(props.getProperty("blast.dir"));
         		} else {
         			System.out.println("Configuration file [" + new File(configPath).getAbsolutePath() + "] doesn't exist");
     			}
