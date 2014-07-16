@@ -34,6 +34,7 @@ public class GenomeComparisonServer extends JsonServerServlet {
     		int threadCount = 1;
     		File tempDir = new File(".");
     		File blastBin = null;
+    		System.out.println("GenomeComparisonServer: configPath=" + configPath);
     		if (configPath != null) {
     			File f = new File(configPath);
     			if (f.exists()) {

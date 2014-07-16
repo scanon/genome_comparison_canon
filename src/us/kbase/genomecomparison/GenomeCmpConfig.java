@@ -37,6 +37,7 @@ public class GenomeCmpConfig {
 		this.threadCount = threadCount;
 		this.tempDir = tempDir;
 		this.blastBin = blastBin;
+		System.out.println("GenomeCmpConfig: blastBin=" + blastBin);
 		this.objectStorage = objectStorage != null ? objectStorage : new ObjectStorage() {
 			@Override
 			public List<ObjectData> getObjects(String token, List<ObjectIdentity> objectIds) throws Exception {
