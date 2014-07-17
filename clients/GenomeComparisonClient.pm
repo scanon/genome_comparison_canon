@@ -317,6 +317,38 @@ sub _validate_version {
 
 
 
+=head2 ws_genome_id
+
+=over 4
+
+
+
+=item Description
+
+A workspace ID that references a Genome data object.
+@id ws KBaseGenomes.Genome
+
+
+=item Definition
+
+=begin html
+
+<pre>
+a string
+</pre>
+
+=end html
+
+=begin text
+
+a string
+
+=end text
+
+=back
+
+
+
 =head2 hit
 
 =over 4
@@ -366,10 +398,12 @@ a reference to a list containing 3 items:
 
 =item Description
 
-string genome1ws - workspace of genome1
-string genome1id - id of genome1
-string genome2ws - workspace of genome2
-string genome2id - id of genome2
+string genome1ws - workspace of genome1 (depricated, use genome1ref instead)
+string genome1id - id of genome1 (depricated, use genome1ref instead)
+ws_genome_id genome1ref - reference to genome1
+string genome2ws - workspace of genome2 (depricated, use genome2ref instead)
+string genome2id - id of genome2 (depricated, use genome2ref instead)
+ws_genome_id genome2ref - reference to genome2
 float sub_bbh_percent - optional parameter, minimum percent of bit score compared to best bit score, default is 90
 string max_evalue -  optional parameter, maximum evalue, default is 1e-10
 list<string> proteome1names - names of genes of genome1
@@ -378,6 +412,12 @@ list<string> proteome2names - names of genes of genome2
 mapping<string, int> proteome2map - map from genes of genome2 to their positions
 list<list<hit>> data1 - outer list iterates over positions of genome1 gene names, inner list iterates over hits from given gene1 to genome2
 list<list<hit>> data2 - outer list iterates over positions of genome2 gene names, inner list iterates over hits from given gene2 to genome1
+@optional genome1ws
+@optional genome1id
+@optional genome1ref
+@optional genome2ws
+@optional genome2id
+@optional genome2ref
 
 
 =item Definition
@@ -388,8 +428,10 @@ list<list<hit>> data2 - outer list iterates over positions of genome2 gene names
 a reference to a hash where the following keys are defined:
 genome1ws has a value which is a string
 genome1id has a value which is a string
+genome1ref has a value which is a GenomeComparison.ws_genome_id
 genome2ws has a value which is a string
 genome2id has a value which is a string
+genome2ref has a value which is a GenomeComparison.ws_genome_id
 sub_bbh_percent has a value which is a float
 max_evalue has a value which is a string
 proteome1names has a value which is a reference to a list where each element is a string
@@ -408,8 +450,10 @@ data2 has a value which is a reference to a list where each element is a referen
 a reference to a hash where the following keys are defined:
 genome1ws has a value which is a string
 genome1id has a value which is a string
+genome1ref has a value which is a GenomeComparison.ws_genome_id
 genome2ws has a value which is a string
 genome2id has a value which is a string
+genome2ref has a value which is a GenomeComparison.ws_genome_id
 sub_bbh_percent has a value which is a float
 max_evalue has a value which is a string
 proteome1names has a value which is a reference to a list where each element is a string

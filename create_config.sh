@@ -14,9 +14,9 @@ then
 cat > $1/deploy.cfg <<EOF
 [genome_comparison]
 thread.count=$2
-temp.dir=$1/temp
+temp.dir=/scratch/genome_comparison
 blast.dir=$1/blast/linux
-#ws.url=url_to_workspace_service
-#ujs.url=url_to_user_job_status_service
+ws.url=https://kbase.us/services/ws/
+ujs.url=https://kbase.us/services/userandjobstate/
 EOF
 fi
