@@ -79,7 +79,7 @@ sub new
 =begin html
 
 <pre>
-$input is a GenomeComparison.blast_proteomes_params
+$input is a blast_proteomes_params
 $job_id is a string
 blast_proteomes_params is a reference to a hash where the following keys are defined:
 	genome1ws has a value which is a string
@@ -97,7 +97,7 @@ blast_proteomes_params is a reference to a hash where the following keys are def
 
 =begin text
 
-$input is a GenomeComparison.blast_proteomes_params
+$input is a blast_proteomes_params
 $job_id is a string
 blast_proteomes_params is a reference to a hash where the following keys are defined:
 	genome1ws has a value which is a string
@@ -178,7 +178,7 @@ sub blast_proteomes
 =begin html
 
 <pre>
-$input is a GenomeComparison.annotate_genome_params
+$input is an annotate_genome_params
 $job_id is a string
 annotate_genome_params is a reference to a hash where the following keys are defined:
 	in_genome_ws has a value which is a string
@@ -193,7 +193,7 @@ annotate_genome_params is a reference to a hash where the following keys are def
 
 =begin text
 
-$input is a GenomeComparison.annotate_genome_params
+$input is an annotate_genome_params
 $job_id is a string
 annotate_genome_params is a reference to a hash where the following keys are defined:
 	in_genome_ws has a value which is a string
@@ -428,18 +428,18 @@ list<list<hit>> data2 - outer list iterates over positions of genome2 gene names
 a reference to a hash where the following keys are defined:
 genome1ws has a value which is a string
 genome1id has a value which is a string
-genome1ref has a value which is a GenomeComparison.ws_genome_id
+genome1ref has a value which is a ws_genome_id
 genome2ws has a value which is a string
 genome2id has a value which is a string
-genome2ref has a value which is a GenomeComparison.ws_genome_id
+genome2ref has a value which is a ws_genome_id
 sub_bbh_percent has a value which is a float
 max_evalue has a value which is a string
 proteome1names has a value which is a reference to a list where each element is a string
 proteome1map has a value which is a reference to a hash where the key is a string and the value is an int
 proteome2names has a value which is a reference to a list where each element is a string
 proteome2map has a value which is a reference to a hash where the key is a string and the value is an int
-data1 has a value which is a reference to a list where each element is a reference to a list where each element is a GenomeComparison.hit
-data2 has a value which is a reference to a list where each element is a reference to a list where each element is a GenomeComparison.hit
+data1 has a value which is a reference to a list where each element is a reference to a list where each element is a hit
+data2 has a value which is a reference to a list where each element is a reference to a list where each element is a hit
 
 </pre>
 
@@ -450,18 +450,18 @@ data2 has a value which is a reference to a list where each element is a referen
 a reference to a hash where the following keys are defined:
 genome1ws has a value which is a string
 genome1id has a value which is a string
-genome1ref has a value which is a GenomeComparison.ws_genome_id
+genome1ref has a value which is a ws_genome_id
 genome2ws has a value which is a string
 genome2id has a value which is a string
-genome2ref has a value which is a GenomeComparison.ws_genome_id
+genome2ref has a value which is a ws_genome_id
 sub_bbh_percent has a value which is a float
 max_evalue has a value which is a string
 proteome1names has a value which is a reference to a list where each element is a string
 proteome1map has a value which is a reference to a hash where the key is a string and the value is an int
 proteome2names has a value which is a reference to a list where each element is a string
 proteome2map has a value which is a reference to a hash where the key is a string and the value is an int
-data1 has a value which is a reference to a list where each element is a reference to a list where each element is a GenomeComparison.hit
-data2 has a value which is a reference to a list where each element is a reference to a list where each element is a GenomeComparison.hit
+data1 has a value which is a reference to a list where each element is a reference to a list where each element is a hit
+data2 has a value which is a reference to a list where each element is a reference to a list where each element is a hit
 
 
 =end text

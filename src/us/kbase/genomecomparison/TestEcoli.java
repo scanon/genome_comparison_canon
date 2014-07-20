@@ -31,8 +31,8 @@ public class TestEcoli {
 		"Escherichia_coli_O127_H6_E2348_69",
 		"Escherichia_coli_UM146"
 	};
-	//private static final String srvUrl = "http://140.221.85.98:8283/jsonrpc";
-	private static final String srvUrl = "http://localhost:8283";
+	//private static final String srvUrl = "http://140.221.85.98:7123/jsonrpc";
+	private static final String srvUrl = "http://localhost:7123";
 	
 	public static void main(String[] args) throws Exception {
 		//runBlast("Shewanella_ANA_3_uid58347", "Shewanella_baltica_BA175_uid52601");
